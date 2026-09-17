@@ -472,7 +472,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="資産管理">
 <meta name="theme-color" content="#303b72">
-<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
 
 </head>
 <body>
@@ -1092,5 +1092,122 @@ renderAll();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 }
-</script></body>
+</script>
+<script>
+(function(){
+  const PERIOD_KEY='assetManagerSelectedPeriodV2';
+
+  function ymNow(){
+    const d=new Date();
+    return {year:d.getFullYear(), month:d.getMonth()+1};
+  }
+  function parseYM(s){
+    const m=String(s||'').match(/^(\d{4})-(\d{1,2})$/);
+    return m?{year:+m[1],month:+m[2]}:null;
+  }
+  function latestSavedMonth(){
+    let latest=null;
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        const raw=localStorage.getItem(k);
+        if(!raw) continue;
+        let obj;
+        try{ obj=JSON.parse(raw); }catch(e){ continue; }
+
+        const visit=(v)=>{
+          if(!v) return;
+          if(Array.isArray(v)){ v.forEach(visit); return; }
+          if(typeof v!=='object') return;
+          if(typeof v.month==='string'){
+            const p=parseYM(v.month);
+            if(p && (!latest || v.month>latest)) latest=v.month;
+          }
+          if(v.months && typeof v.months==='object'){
+            Object.keys(v.months).forEach(key=>{
+              const p=parseYM(key);
+              if(p && (!latest || key>latest)) latest=key;
+            });
+          }
+        };
+        visit(obj);
+      }
+    }catch(e){}
+    return latest ? parseYM(latest) : null;
+  }
+  function getDefaultPeriod(){
+    const saved=latestSavedMonth();
+    if(saved) return saved;
+    try{
+      const remembered=parseYM(localStorage.getItem(PERIOD_KEY));
+      if(remembered) return remembered;
+    }catch(e){}
+    return ymNow();
+  }
+  function ensureOption(sel,val,label){
+    if(!sel) return;
+    val=String(val);
+    if(!Array.from(sel.options).some(o=>o.value===val)){
+      const o=document.createElement('option');
+      o.value=val; o.textContent=label||val;
+      sel.appendChild(o);
+    }
+  }
+  function setPair(yearSel,monthSel,p){
+    if(!yearSel||!monthSel) return;
+    ensureOption(yearSel,p.year,p.year+'年');
+    ensureOption(monthSel,p.month,p.month+'月');
+    yearSel.value=String(p.year);
+    monthSel.value=String(p.month);
+  }
+  function syncPeriod(p,source){
+    ['home','invest'].forEach(prefix=>{
+      const y=document.getElementById(prefix+'Year');
+      const m=document.getElementById(prefix+'Month');
+      setPair(y,m,p);
+    });
+    try{ localStorage.setItem(PERIOD_KEY,`${p.year}-${String(p.month).padStart(2,'0')}`); }catch(e){}
+    // Ask existing app renderers to refresh without depending on them for selection.
+    ['homeYear','homeMonth','investYear','investMonth'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el && el!==source) el.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+  }
+  function bind(){
+    const p=getDefaultPeriod();
+    syncPeriod(p,null);
+
+    ['home','invest'].forEach(prefix=>{
+      const y=document.getElementById(prefix+'Year');
+      const m=document.getElementById(prefix+'Month');
+      [y,m].forEach(el=>{
+        if(!el || el.dataset.periodV2Bound) return;
+        el.dataset.periodV2Bound='1';
+        el.addEventListener('change',()=>{
+          const yy=+(document.getElementById(prefix+'Year')?.value||p.year);
+          const mm=+(document.getElementById(prefix+'Month')?.value||p.month);
+          syncPeriod({year:yy,month:mm},el);
+        });
+      });
+    });
+
+    // When a monthly record is saved, the app's latest stored month becomes the next default.
+    document.addEventListener('click',e=>{
+      const t=e.target.closest('button');
+      if(!t) return;
+      const label=(t.textContent||'').trim();
+      if(/保存|登録/.test(label)){
+        setTimeout(()=>{
+          const lp=latestSavedMonth();
+          if(lp) syncPeriod(lp,null);
+        },100);
+      }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
+  else bind();
+})();
+</script>
+
+</body>
 </html>
