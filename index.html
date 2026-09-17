@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#303b72">
+<title>資産管理 V1</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f4f6f8;--text:#182033;--muted:#7b8290;--primary:#5969d9;--primary2:#303b72;--soft:#eef0ff;--green:#3d9c75;--gold:#d49c3d;--red:#c94a55;--line:#edf0f4}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
+button,input,select{font:inherit}
+.app{max-width:480px;margin:auto;min-height:100vh;padding-bottom:86px}
+header{background:#fff;padding:17px 18px 13px;position:sticky;top:0;z-index:20;border-bottom:1px solid #eee}
+h1{font-size:21px;margin:0;font-weight:850} .date{font-size:12px;color:var(--muted);margin-top:3px}
+.page{display:none} #home{display:block} .page:target{display:block}
+body:has(#invest:target) #home,body:has(#input:target) #home,body:has(#data:target) #home{display:none}
+.hero{margin:14px;background:linear-gradient(135deg,var(--primary2),var(--primary));color:#fff;border-radius:22px;padding:19px;box-shadow:0 8px 22px #303b7226}
+.hero .lab{font-size:12px;opacity:.82} .hero .total{font-size:31px;font-weight:850;margin:5px 0 10px}
+.hero-pills{display:flex;gap:7px;flex-wrap:wrap} .hero-pill{font-size:11px;background:#ffffff20;padding:6px 9px;border-radius:9px}
+.card{background:#fff;border-radius:18px;margin:12px 14px;padding:16px;box-shadow:0 2px 10px #1b24400a}
+h2{font-size:16px;margin:0 0 12px} h3{font-size:13px;margin:16px 0 7px}
+.sub{font-size:11px;color:var(--muted);line-height:1.55}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 14px}
+.mini{background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 10px #1b24400a}
+.mini .lab{font-size:11px;color:var(--muted)} .mini b{font-size:18px;display:block;margin-top:5px}
+.bank-card{border-top:3px solid #46a57a} .invest-card{border-top:3px solid var(--primary)}
+.data-row{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.data-row:last-child{border-bottom:0}
+.good{color:#16844a} .bad{color:#c2414b}
+.chart-toggle{display:flex;background:#f1f3f7;border-radius:12px;padding:4px;margin-bottom:10px}
+.chart-toggle button{flex:1;border:0;background:transparent;padding:7px;border-radius:9px;font-size:12px;font-weight:750;color:#72788a}
+.chart-toggle button.active{background:#fff;color:#3442b8;box-shadow:0 1px 4px #00000012}
+.ym-select{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 12px}
+select,input{width:100%;padding:11px 12px;border:1px solid #dfe3e9;border-radius:12px;background:#fff;color:#182033}
+.chartbox{width:100%;overflow:hidden;min-height:205px} .asset-svg{display:block;width:100%;height:auto}
+.field{margin:14px 0} .field-label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:750}
+.columns-head{display:grid;gap:6px;font-size:9px;color:#8a91a0;margin-bottom:4px;padding:0 3px}
+.columns-head.bank{grid-template-columns:1.2fr .85fr 34px}
+.columns-head.fund{grid-template-columns:1fr .68fr .68fr .68fr 34px}
+.list-box{background:#f8f9fb;border-radius:14px;padding:9px;margin-top:7px}
+.entry-row{display:grid;gap:6px;margin:7px 0}
+.entry-row.bank{grid-template-columns:1.2fr .85fr 34px}
+.entry-row.fund{grid-template-columns:1fr .68fr .68fr .68fr 34px}
+.entry-row input{min-width:0;padding:9px 7px;font-size:12px}
+.remove-btn{border:0;border-radius:10px;background:#eceff5;color:#6b7280;font-size:18px}
+.add-btn{width:100%;border:1px dashed #b8c0d2;background:#fff;color:#4450b9;border-radius:11px;padding:9px;font-weight:800;font-size:12px;margin-top:7px}
+.total-preview{background:#eef7f2;border-radius:11px;padding:9px;margin-top:8px;font-size:11px;color:#35664c;display:grid;grid-template-columns:1fr auto;gap:5px}
+.total-preview b{font-size:13px}
+.calc3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.calc3 label,.calc2 label{font-size:9px;color:#7b8290}
+.calc3 input,.calc2 input{margin-top:4px;padding:9px 7px;font-size:12px}
+.calc2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.reclass-box{background:#f7f8fb;border:1px solid #edf0f5;border-radius:14px;padding:11px;margin-top:8px}
+.note{font-size:10px;line-height:1.5;color:#737b89;background:#fafbfc;border-radius:10px;padding:8px;margin-top:8px}
+.info{font-size:10px;line-height:1.5;color:#4450b9;background:#eef0ff;border-radius:10px;padding:8px;margin-top:8px}
+.primary-btn,.secondary-btn,.danger-btn{border:0;border-radius:12px;padding:11px 13px;font-weight:800;font-size:12px}
+.primary-btn{background:#4f5ed2;color:#fff} .secondary-btn{background:#eef0ff;color:#3442b8} .danger-btn{background:#fff0f1;color:#b23a46}
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.pie-wrap{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center}
+.pie{width:150px;height:150px;border-radius:50%;background:conic-gradient(#5969d9 0 62.362%,#d49c3d 62.362% 90.546%,#3d9c75 90.546% 100%);position:relative}
+.pie:after{content:"";position:absolute;inset:33px;background:#fff;border-radius:50%}
+.legend-row{display:grid;grid-template-columns:10px 1fr auto;gap:7px;align-items:center;margin:9px 0;font-size:12px}
+.dot{width:10px;height:10px;border-radius:50%} .stock{background:#5969d9} .comm{background:#d49c3d} .cash{background:#3d9c75}
+.ratio{font-size:23px;font-weight:850;letter-spacing:-.03em}
+.kpi{background:#f8f9fb;border-radius:14px;padding:12px;margin-top:8px}
+.kpi .label{font-size:10px;color:var(--muted)} .kpi .value{font-size:23px;font-weight:850;margin-top:3px}
+.table-wrap{overflow:auto;border:1px solid #edf0f4;border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:11px}
+th,td{padding:8px 7px;border-bottom:1px solid #edf0f4;text-align:right;white-space:nowrap}
+th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:first-child,th:first-child{text-align:left}
+.status{padding:4px 7px;border-radius:999px;background:#eef0ff;color:#3442b8;font-size:10px;font-weight:750}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;height:72px;background:#fff;border-top:1px solid #e5e7eb;display:grid;grid-template-columns:repeat(4,1fr);z-index:30}
+.bottom a{text-decoration:none;text-align:center;color:#8a909d;font-size:10px;padding-top:10px} .bottom a span{display:block;font-size:21px;margin-bottom:2px}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#182033;color:#fff;padding:9px 12px;border-radius:11px;font-size:11px;z-index:99;display:none;max-width:340px;text-align:center}
+@media(max-width:390px){.calc3{grid-template-columns:1fr}.entry-row.fund,.columns-head.fund{grid-template-columns:1fr .8fr .8fr .8fr 30px}}
+
+.period-radio{position:absolute;opacity:0;pointer-events:none}
+.css-period-picker{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.css-dropdown{position:relative}
+.css-dropdown summary{list-style:none;cursor:pointer;border:1px solid #dfe3e9;border-radius:12px;background:#fff;padding:11px 34px 11px 12px;font-size:15px;position:relative}
+.css-dropdown summary::-webkit-details-marker{display:none}
+.css-dropdown summary>span:last-child{position:absolute;right:12px;color:#7b8290}
+.css-selected-value{display:none}
+.css-drop-menu{position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:40;background:#fff;border:1px solid #e1e5ec;border-radius:12px;padding:6px;box-shadow:0 10px 24px #1b244020;max-height:260px;overflow:auto}
+.css-drop-menu label{display:block;padding:9px 10px;border-radius:8px;font-size:13px;cursor:pointer}
+.css-drop-menu label:hover{background:#eef0ff;color:#3442b8}
+.css-month-group{display:none;grid-template-columns:repeat(3,1fr);gap:4px}
+.css-month-group label{text-align:center}
+.css-home-panel,.css-invest-panel{display:none}
+.inner-card{margin:14px 0 0;box-shadow:none;border:1px solid #edf0f4}
+.css-static-only{display:block}
+#p2020_06:checked ~ .app .hp-2020-06{display:block}
+#p2020_06:checked ~ .app .ip-2020-06{display:block}
+#p2020_06:checked ~ .app .css-year-summary .y2020{display:inline}
+#p2020_06:checked ~ .app .css-month-summary .m06{display:inline}
+#p2020_06:checked ~ .app .css-month-options .for-2020{display:grid}
+#p2020_07:checked ~ .app .hp-2020-07{display:block}
+#p2020_07:checked ~ .app .ip-2020-07{display:block}
+#p2020_07:checked ~ .app .css-year-summary .y2020{display:inline}
+#p2020_07:checked ~ .app .css-month-summary .m07{display:inline}
+#p2020_07:checked ~ .app .css-month-options .for-2020{display:grid}
+#p2020_08:checked ~ .app .hp-2020-08{display:block}
+#p2020_08:checked ~ .app .ip-2020-08{display:block}
+#p2020_08:checked ~ .app .css-year-summary .y2020{display:inline}
+#p2020_08:checked ~ .app .css-month-summary .m08{display:inline}
+#p2020_08:checked ~ .app .css-month-options .for-2020{display:grid}
+#p2020_09:checked ~ .app .hp-2020-09{display:block}
+#p2020_09:checked ~ .app .ip-2020-09{display:block}
+#p2020_09:checked ~ .app .css-year-summary .y2020{display:inline}
+#p2020_09:checked ~ .app .css-month-summary .m09{display:inline}
+#p2020_09:checked ~ .app .css-month-options .for-2020{display:grid}
+#p2020_10:checked ~ .app .hp-2020-10{display:block}
+#p2020_10:checked ~ .app .ip-2020-10{display:block}
+#p2020_10:checked ~ .app .css-year-summary .y2020{display:inline}
+#p2020_10:checked ~ .app .css-month-summary .m10{display:inline}
+#p2020_10:checked ~ .app .css-month-options .for-2020{display:grid}
+#p2020_11:checked ~ .app .hp-2020-11{display:block}
+#p2020_11:checked ~ .app .ip-2020-11{display:block}
+#p2020_11:checked ~ .app .css-year-summary .y2020{display:inline}
+#p2020_11:checked ~ .app .css-month-summary .m11{display:inline}
+#p2020_11:checked ~ .app .css-month-options .for-2020{display:grid}
+#p2020_12:checked ~ .app .hp-2020-12{display:block}
+#p2020_12:checked ~ .app .ip-2020-12{display:block}
+#p2020_12:checked ~ .app .css-year-summary .y2020{display:inline}
+#p2020_12:checked ~ .app .css-month-summary .m12{display:inline}
+#p2020_12:checked ~ .app .css-month-options .for-2020{display:grid}
+#p2021_01:checked ~ .app .hp-2021-01{display:block}
+#p2021_01:checked ~ .app .ip-2021-01{display:block}
+#p2021_01:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_01:checked ~ .app .css-month-summary .m01{display:inline}
+#p2021_01:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_02:checked ~ .app .hp-2021-02{display:block}
+#p2021_02:checked ~ .app .ip-2021-02{display:block}
+#p2021_02:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_02:checked ~ .app .css-month-summary .m02{display:inline}
+#p2021_02:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_03:checked ~ .app .hp-2021-03{display:block}
+#p2021_03:checked ~ .app .ip-2021-03{display:block}
+#p2021_03:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_03:checked ~ .app .css-month-summary .m03{display:inline}
+#p2021_03:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_04:checked ~ .app .hp-2021-04{display:block}
+#p2021_04:checked ~ .app .ip-2021-04{display:block}
+#p2021_04:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_04:checked ~ .app .css-month-summary .m04{display:inline}
+#p2021_04:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_05:checked ~ .app .hp-2021-05{display:block}
+#p2021_05:checked ~ .app .ip-2021-05{display:block}
+#p2021_05:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_05:checked ~ .app .css-month-summary .m05{display:inline}
+#p2021_05:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_06:checked ~ .app .hp-2021-06{display:block}
+#p2021_06:checked ~ .app .ip-2021-06{display:block}
+#p2021_06:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_06:checked ~ .app .css-month-summary .m06{display:inline}
+#p2021_06:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_07:checked ~ .app .hp-2021-07{display:block}
+#p2021_07:checked ~ .app .ip-2021-07{display:block}
+#p2021_07:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_07:checked ~ .app .css-month-summary .m07{display:inline}
+#p2021_07:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_08:checked ~ .app .hp-2021-08{display:block}
+#p2021_08:checked ~ .app .ip-2021-08{display:block}
+#p2021_08:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_08:checked ~ .app .css-month-summary .m08{display:inline}
+#p2021_08:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_09:checked ~ .app .hp-2021-09{display:block}
+#p2021_09:checked ~ .app .ip-2021-09{display:block}
+#p2021_09:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_09:checked ~ .app .css-month-summary .m09{display:inline}
+#p2021_09:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_10:checked ~ .app .hp-2021-10{display:block}
+#p2021_10:checked ~ .app .ip-2021-10{display:block}
+#p2021_10:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_10:checked ~ .app .css-month-summary .m10{display:inline}
+#p2021_10:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_11:checked ~ .app .hp-2021-11{display:block}
+#p2021_11:checked ~ .app .ip-2021-11{display:block}
+#p2021_11:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_11:checked ~ .app .css-month-summary .m11{display:inline}
+#p2021_11:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2021_12:checked ~ .app .hp-2021-12{display:block}
+#p2021_12:checked ~ .app .ip-2021-12{display:block}
+#p2021_12:checked ~ .app .css-year-summary .y2021{display:inline}
+#p2021_12:checked ~ .app .css-month-summary .m12{display:inline}
+#p2021_12:checked ~ .app .css-month-options .for-2021{display:grid}
+#p2022_01:checked ~ .app .hp-2022-01{display:block}
+#p2022_01:checked ~ .app .ip-2022-01{display:block}
+#p2022_01:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_01:checked ~ .app .css-month-summary .m01{display:inline}
+#p2022_01:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_02:checked ~ .app .hp-2022-02{display:block}
+#p2022_02:checked ~ .app .ip-2022-02{display:block}
+#p2022_02:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_02:checked ~ .app .css-month-summary .m02{display:inline}
+#p2022_02:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_03:checked ~ .app .hp-2022-03{display:block}
+#p2022_03:checked ~ .app .ip-2022-03{display:block}
+#p2022_03:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_03:checked ~ .app .css-month-summary .m03{display:inline}
+#p2022_03:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_04:checked ~ .app .hp-2022-04{display:block}
+#p2022_04:checked ~ .app .ip-2022-04{display:block}
+#p2022_04:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_04:checked ~ .app .css-month-summary .m04{display:inline}
+#p2022_04:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_05:checked ~ .app .hp-2022-05{display:block}
+#p2022_05:checked ~ .app .ip-2022-05{display:block}
+#p2022_05:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_05:checked ~ .app .css-month-summary .m05{display:inline}
+#p2022_05:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_06:checked ~ .app .hp-2022-06{display:block}
+#p2022_06:checked ~ .app .ip-2022-06{display:block}
+#p2022_06:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_06:checked ~ .app .css-month-summary .m06{display:inline}
+#p2022_06:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_07:checked ~ .app .hp-2022-07{display:block}
+#p2022_07:checked ~ .app .ip-2022-07{display:block}
+#p2022_07:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_07:checked ~ .app .css-month-summary .m07{display:inline}
+#p2022_07:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_08:checked ~ .app .hp-2022-08{display:block}
+#p2022_08:checked ~ .app .ip-2022-08{display:block}
+#p2022_08:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_08:checked ~ .app .css-month-summary .m08{display:inline}
+#p2022_08:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_09:checked ~ .app .hp-2022-09{display:block}
+#p2022_09:checked ~ .app .ip-2022-09{display:block}
+#p2022_09:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_09:checked ~ .app .css-month-summary .m09{display:inline}
+#p2022_09:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_10:checked ~ .app .hp-2022-10{display:block}
+#p2022_10:checked ~ .app .ip-2022-10{display:block}
+#p2022_10:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_10:checked ~ .app .css-month-summary .m10{display:inline}
+#p2022_10:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_11:checked ~ .app .hp-2022-11{display:block}
+#p2022_11:checked ~ .app .ip-2022-11{display:block}
+#p2022_11:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_11:checked ~ .app .css-month-summary .m11{display:inline}
+#p2022_11:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2022_12:checked ~ .app .hp-2022-12{display:block}
+#p2022_12:checked ~ .app .ip-2022-12{display:block}
+#p2022_12:checked ~ .app .css-year-summary .y2022{display:inline}
+#p2022_12:checked ~ .app .css-month-summary .m12{display:inline}
+#p2022_12:checked ~ .app .css-month-options .for-2022{display:grid}
+#p2023_01:checked ~ .app .hp-2023-01{display:block}
+#p2023_01:checked ~ .app .ip-2023-01{display:block}
+#p2023_01:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_01:checked ~ .app .css-month-summary .m01{display:inline}
+#p2023_01:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_02:checked ~ .app .hp-2023-02{display:block}
+#p2023_02:checked ~ .app .ip-2023-02{display:block}
+#p2023_02:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_02:checked ~ .app .css-month-summary .m02{display:inline}
+#p2023_02:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_03:checked ~ .app .hp-2023-03{display:block}
+#p2023_03:checked ~ .app .ip-2023-03{display:block}
+#p2023_03:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_03:checked ~ .app .css-month-summary .m03{display:inline}
+#p2023_03:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_04:checked ~ .app .hp-2023-04{display:block}
+#p2023_04:checked ~ .app .ip-2023-04{display:block}
+#p2023_04:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_04:checked ~ .app .css-month-summary .m04{display:inline}
+#p2023_04:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_05:checked ~ .app .hp-2023-05{display:block}
+#p2023_05:checked ~ .app .ip-2023-05{display:block}
+#p2023_05:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_05:checked ~ .app .css-month-summary .m05{display:inline}
+#p2023_05:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_06:checked ~ .app .hp-2023-06{display:block}
+#p2023_06:checked ~ .app .ip-2023-06{display:block}
+#p2023_06:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_06:checked ~ .app .css-month-summary .m06{display:inline}
+#p2023_06:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_07:checked ~ .app .hp-2023-07{display:block}
+#p2023_07:checked ~ .app .ip-2023-07{display:block}
+#p2023_07:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_07:checked ~ .app .css-month-summary .m07{display:inline}
+#p2023_07:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_08:checked ~ .app .hp-2023-08{display:block}
+#p2023_08:checked ~ .app .ip-2023-08{display:block}
+#p2023_08:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_08:checked ~ .app .css-month-summary .m08{display:inline}
+#p2023_08:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_09:checked ~ .app .hp-2023-09{display:block}
+#p2023_09:checked ~ .app .ip-2023-09{display:block}
+#p2023_09:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_09:checked ~ .app .css-month-summary .m09{display:inline}
+#p2023_09:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_10:checked ~ .app .hp-2023-10{display:block}
+#p2023_10:checked ~ .app .ip-2023-10{display:block}
+#p2023_10:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_10:checked ~ .app .css-month-summary .m10{display:inline}
+#p2023_10:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_11:checked ~ .app .hp-2023-11{display:block}
+#p2023_11:checked ~ .app .ip-2023-11{display:block}
+#p2023_11:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_11:checked ~ .app .css-month-summary .m11{display:inline}
+#p2023_11:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2023_12:checked ~ .app .hp-2023-12{display:block}
+#p2023_12:checked ~ .app .ip-2023-12{display:block}
+#p2023_12:checked ~ .app .css-year-summary .y2023{display:inline}
+#p2023_12:checked ~ .app .css-month-summary .m12{display:inline}
+#p2023_12:checked ~ .app .css-month-options .for-2023{display:grid}
+#p2024_01:checked ~ .app .hp-2024-01{display:block}
+#p2024_01:checked ~ .app .ip-2024-01{display:block}
+#p2024_01:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_01:checked ~ .app .css-month-summary .m01{display:inline}
+#p2024_01:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_02:checked ~ .app .hp-2024-02{display:block}
+#p2024_02:checked ~ .app .ip-2024-02{display:block}
+#p2024_02:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_02:checked ~ .app .css-month-summary .m02{display:inline}
+#p2024_02:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_03:checked ~ .app .hp-2024-03{display:block}
+#p2024_03:checked ~ .app .ip-2024-03{display:block}
+#p2024_03:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_03:checked ~ .app .css-month-summary .m03{display:inline}
+#p2024_03:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_04:checked ~ .app .hp-2024-04{display:block}
+#p2024_04:checked ~ .app .ip-2024-04{display:block}
+#p2024_04:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_04:checked ~ .app .css-month-summary .m04{display:inline}
+#p2024_04:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_05:checked ~ .app .hp-2024-05{display:block}
+#p2024_05:checked ~ .app .ip-2024-05{display:block}
+#p2024_05:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_05:checked ~ .app .css-month-summary .m05{display:inline}
+#p2024_05:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_06:checked ~ .app .hp-2024-06{display:block}
+#p2024_06:checked ~ .app .ip-2024-06{display:block}
+#p2024_06:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_06:checked ~ .app .css-month-summary .m06{display:inline}
+#p2024_06:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_07:checked ~ .app .hp-2024-07{display:block}
+#p2024_07:checked ~ .app .ip-2024-07{display:block}
+#p2024_07:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_07:checked ~ .app .css-month-summary .m07{display:inline}
+#p2024_07:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_08:checked ~ .app .hp-2024-08{display:block}
+#p2024_08:checked ~ .app .ip-2024-08{display:block}
+#p2024_08:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_08:checked ~ .app .css-month-summary .m08{display:inline}
+#p2024_08:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_09:checked ~ .app .hp-2024-09{display:block}
+#p2024_09:checked ~ .app .ip-2024-09{display:block}
+#p2024_09:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_09:checked ~ .app .css-month-summary .m09{display:inline}
+#p2024_09:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_10:checked ~ .app .hp-2024-10{display:block}
+#p2024_10:checked ~ .app .ip-2024-10{display:block}
+#p2024_10:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_10:checked ~ .app .css-month-summary .m10{display:inline}
+#p2024_10:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_11:checked ~ .app .hp-2024-11{display:block}
+#p2024_11:checked ~ .app .ip-2024-11{display:block}
+#p2024_11:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_11:checked ~ .app .css-month-summary .m11{display:inline}
+#p2024_11:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2024_12:checked ~ .app .hp-2024-12{display:block}
+#p2024_12:checked ~ .app .ip-2024-12{display:block}
+#p2024_12:checked ~ .app .css-year-summary .y2024{display:inline}
+#p2024_12:checked ~ .app .css-month-summary .m12{display:inline}
+#p2024_12:checked ~ .app .css-month-options .for-2024{display:grid}
+#p2025_01:checked ~ .app .hp-2025-01{display:block}
+#p2025_01:checked ~ .app .ip-2025-01{display:block}
+#p2025_01:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_01:checked ~ .app .css-month-summary .m01{display:inline}
+#p2025_01:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_02:checked ~ .app .hp-2025-02{display:block}
+#p2025_02:checked ~ .app .ip-2025-02{display:block}
+#p2025_02:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_02:checked ~ .app .css-month-summary .m02{display:inline}
+#p2025_02:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_03:checked ~ .app .hp-2025-03{display:block}
+#p2025_03:checked ~ .app .ip-2025-03{display:block}
+#p2025_03:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_03:checked ~ .app .css-month-summary .m03{display:inline}
+#p2025_03:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_04:checked ~ .app .hp-2025-04{display:block}
+#p2025_04:checked ~ .app .ip-2025-04{display:block}
+#p2025_04:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_04:checked ~ .app .css-month-summary .m04{display:inline}
+#p2025_04:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_05:checked ~ .app .hp-2025-05{display:block}
+#p2025_05:checked ~ .app .ip-2025-05{display:block}
+#p2025_05:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_05:checked ~ .app .css-month-summary .m05{display:inline}
+#p2025_05:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_06:checked ~ .app .hp-2025-06{display:block}
+#p2025_06:checked ~ .app .ip-2025-06{display:block}
+#p2025_06:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_06:checked ~ .app .css-month-summary .m06{display:inline}
+#p2025_06:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_07:checked ~ .app .hp-2025-07{display:block}
+#p2025_07:checked ~ .app .ip-2025-07{display:block}
+#p2025_07:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_07:checked ~ .app .css-month-summary .m07{display:inline}
+#p2025_07:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_08:checked ~ .app .hp-2025-08{display:block}
+#p2025_08:checked ~ .app .ip-2025-08{display:block}
+#p2025_08:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_08:checked ~ .app .css-month-summary .m08{display:inline}
+#p2025_08:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_09:checked ~ .app .hp-2025-09{display:block}
+#p2025_09:checked ~ .app .ip-2025-09{display:block}
+#p2025_09:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_09:checked ~ .app .css-month-summary .m09{display:inline}
+#p2025_09:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_10:checked ~ .app .hp-2025-10{display:block}
+#p2025_10:checked ~ .app .ip-2025-10{display:block}
+#p2025_10:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_10:checked ~ .app .css-month-summary .m10{display:inline}
+#p2025_10:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_11:checked ~ .app .hp-2025-11{display:block}
+#p2025_11:checked ~ .app .ip-2025-11{display:block}
+#p2025_11:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_11:checked ~ .app .css-month-summary .m11{display:inline}
+#p2025_11:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2025_12:checked ~ .app .hp-2025-12{display:block}
+#p2025_12:checked ~ .app .ip-2025-12{display:block}
+#p2025_12:checked ~ .app .css-year-summary .y2025{display:inline}
+#p2025_12:checked ~ .app .css-month-summary .m12{display:inline}
+#p2025_12:checked ~ .app .css-month-options .for-2025{display:grid}
+#p2026_01:checked ~ .app .hp-2026-01{display:block}
+#p2026_01:checked ~ .app .ip-2026-01{display:block}
+#p2026_01:checked ~ .app .css-year-summary .y2026{display:inline}
+#p2026_01:checked ~ .app .css-month-summary .m01{display:inline}
+#p2026_01:checked ~ .app .css-month-options .for-2026{display:grid}
+#p2026_02:checked ~ .app .hp-2026-02{display:block}
+#p2026_02:checked ~ .app .ip-2026-02{display:block}
+#p2026_02:checked ~ .app .css-year-summary .y2026{display:inline}
+#p2026_02:checked ~ .app .css-month-summary .m02{display:inline}
+#p2026_02:checked ~ .app .css-month-options .for-2026{display:grid}
+#p2026_03:checked ~ .app .hp-2026-03{display:block}
+#p2026_03:checked ~ .app .ip-2026-03{display:block}
+#p2026_03:checked ~ .app .css-year-summary .y2026{display:inline}
+#p2026_03:checked ~ .app .css-month-summary .m03{display:inline}
+#p2026_03:checked ~ .app .css-month-options .for-2026{display:grid}
+#p2026_04:checked ~ .app .hp-2026-04{display:block}
+#p2026_04:checked ~ .app .ip-2026-04{display:block}
+#p2026_04:checked ~ .app .css-year-summary .y2026{display:inline}
+#p2026_04:checked ~ .app .css-month-summary .m04{display:inline}
+#p2026_04:checked ~ .app .css-month-options .for-2026{display:grid}
+#p2026_05:checked ~ .app .hp-2026-05{display:block}
+#p2026_05:checked ~ .app .ip-2026-05{display:block}
+#p2026_05:checked ~ .app .css-year-summary .y2026{display:inline}
+#p2026_05:checked ~ .app .css-month-summary .m05{display:inline}
+#p2026_05:checked ~ .app .css-month-options .for-2026{display:grid}
+#p2026_06:checked ~ .app .hp-2026-06{display:block}
+#p2026_06:checked ~ .app .ip-2026-06{display:block}
+#p2026_06:checked ~ .app .css-year-summary .y2026{display:inline}
+#p2026_06:checked ~ .app .css-month-summary .m06{display:inline}
+#p2026_06:checked ~ .app .css-month-options .for-2026{display:grid}
+#p2026_07:checked ~ .app .hp-2026-07{display:block}
+#p2026_07:checked ~ .app .ip-2026-07{display:block}
+#p2026_07:checked ~ .app .css-year-summary .y2026{display:inline}
+#p2026_07:checked ~ .app .css-month-summary .m07{display:inline}
+#p2026_07:checked ~ .app .css-month-options .for-2026{display:grid}
+#p2026_08:checked ~ .app .hp-2026-08{display:block}
+#p2026_08:checked ~ .app .ip-2026-08{display:block}
+#p2026_08:checked ~ .app .css-year-summary .y2026{display:inline}
+#p2026_08:checked ~ .app .css-month-summary .m08{display:inline}
+#p2026_08:checked ~ .app .css-month-options .for-2026{display:grid}
+</style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="資産管理">
+<meta name="theme-color" content="#303b72">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+
+</head>
+<body>
+
+<div class="app">
+<header><h1>資産管理</h1><div class="date" id="headerDate">2026年8月時点</div></header>
+
+<section id="home" class="page"><div class="card"><h2>初回セットアップ</h2>
+<div class="sub">GitHub公開版には個人の資産残高・取引履歴を含めていません。入力したデータはこの端末のブラウザ内に保存されます。バックアップJSONがある場合は「データ」から復元してください。</div></div>
+<div class="card">
+<h2>表示する年月</h2>
+
+<div class="css-period-picker">
+  <details class="css-dropdown">
+    <summary class="css-year-summary"><span class="css-selected-value y2020">2020年</span><span class="css-selected-value y2021">2021年</span><span class="css-selected-value y2022">2022年</span><span class="css-selected-value y2023">2023年</span><span class="css-selected-value y2024">2024年</span><span class="css-selected-value y2025">2025年</span><span class="css-selected-value y2026">2026年</span><span>⌄</span></summary>
+    <div class="css-drop-menu"><label for="p2020_12">2020年</label><label for="p2021_12">2021年</label><label for="p2022_12">2022年</label><label for="p2023_12">2023年</label><label for="p2024_12">2024年</label><label for="p2025_12">2025年</label><label for="p2026_08">2026年</label></div>
+  </details>
+  <details class="css-dropdown">
+    <summary class="css-month-summary"><span class="css-selected-value m01">1月</span><span class="css-selected-value m02">2月</span><span class="css-selected-value m03">3月</span><span class="css-selected-value m04">4月</span><span class="css-selected-value m05">5月</span><span class="css-selected-value m06">6月</span><span class="css-selected-value m07">7月</span><span class="css-selected-value m08">8月</span><span class="css-selected-value m09">9月</span><span class="css-selected-value m10">10月</span><span class="css-selected-value m11">11月</span><span class="css-selected-value m12">12月</span><span>⌄</span></summary>
+    <div class="css-drop-menu css-month-options"><div class="css-month-group for-2020"><label for="p2020_06">6月</label><label for="p2020_07">7月</label><label for="p2020_08">8月</label><label for="p2020_09">9月</label><label for="p2020_10">10月</label><label for="p2020_11">11月</label><label for="p2020_12">12月</label></div><div class="css-month-group for-2021"><label for="p2021_01">1月</label><label for="p2021_02">2月</label><label for="p2021_03">3月</label><label for="p2021_04">4月</label><label for="p2021_05">5月</label><label for="p2021_06">6月</label><label for="p2021_07">7月</label><label for="p2021_08">8月</label><label for="p2021_09">9月</label><label for="p2021_10">10月</label><label for="p2021_11">11月</label><label for="p2021_12">12月</label></div><div class="css-month-group for-2022"><label for="p2022_01">1月</label><label for="p2022_02">2月</label><label for="p2022_03">3月</label><label for="p2022_04">4月</label><label for="p2022_05">5月</label><label for="p2022_06">6月</label><label for="p2022_07">7月</label><label for="p2022_08">8月</label><label for="p2022_09">9月</label><label for="p2022_10">10月</label><label for="p2022_11">11月</label><label for="p2022_12">12月</label></div><div class="css-month-group for-2023"><label for="p2023_01">1月</label><label for="p2023_02">2月</label><label for="p2023_03">3月</label><label for="p2023_04">4月</label><label for="p2023_05">5月</label><label for="p2023_06">6月</label><label for="p2023_07">7月</label><label for="p2023_08">8月</label><label for="p2023_09">9月</label><label for="p2023_10">10月</label><label for="p2023_11">11月</label><label for="p2023_12">12月</label></div><div class="css-month-group for-2024"><label for="p2024_01">1月</label><label for="p2024_02">2月</label><label for="p2024_03">3月</label><label for="p2024_04">4月</label><label for="p2024_05">5月</label><label for="p2024_06">6月</label><label for="p2024_07">7月</label><label for="p2024_08">8月</label><label for="p2024_09">9月</label><label for="p2024_10">10月</label><label for="p2024_11">11月</label><label for="p2024_12">12月</label></div><div class="css-month-group for-2025"><label for="p2025_01">1月</label><label for="p2025_02">2月</label><label for="p2025_03">3月</label><label for="p2025_04">4月</label><label for="p2025_05">5月</label><label for="p2025_06">6月</label><label for="p2025_07">7月</label><label for="p2025_08">8月</label><label for="p2025_09">9月</label><label for="p2025_10">10月</label><label for="p2025_11">11月</label><label for="p2025_12">12月</label></div><div class="css-month-group for-2026"><label for="p2026_01">1月</label><label for="p2026_02">2月</label><label for="p2026_03">3月</label><label for="p2026_04">4月</label><label for="p2026_05">5月</label><label for="p2026_06">6月</label><label for="p2026_07">7月</label><label for="p2026_08">8月</label></div></div>
+  </details>
+</div>
+
+<div class="sub" style="margin-top:8px">選択した月時点の総資産・銀行預金・投資資産を表示します。</div>
+</div>
+
+    <div class="card">
+<h2>資産の推移</h2>
+<div class="chart-toggle"><button type="button" id="monthMode" class="active">月次</button><button type="button" id="yearMode">年次</button></div>
+<div id="monthControls">
+<div class="ym-select">
+<select id="graphYear"><option value="2020">2020年</option><option value="2021">2021年</option><option value="2022">2022年</option><option value="2023">2023年</option><option value="2024">2024年</option><option value="2025">2025年</option><option value="2026" selected>2026年</option></select>
+<select id="graphMonth"><option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option><option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8" selected>8月</option></select>
+</div>
+<div class="sub">選択した期末までの直近12か月</div>
+</div>
+<div class="chartbox" id="chartBox"><svg class="asset-svg" viewBox="0 0 390 230"><defs><linearGradient id="fallbackMonth" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5969d9" stop-opacity=".22"/><stop offset="100%" stop-color="#5969d9" stop-opacity="0"/></linearGradient></defs><line x1="60" y1="192.0" x2="378" y2="192.0" stroke="#e8ebf1"/><text x="53" y="196.0" text-anchor="end" font-size="10" fill="#8a91a0">4.9千万</text><line x1="60" y1="133.3" x2="378" y2="133.3" stroke="#e8ebf1"/><text x="53" y="137.3" text-anchor="end" font-size="10" fill="#8a91a0">5.4千万</text><line x1="60" y1="74.7" x2="378" y2="74.7" stroke="#e8ebf1"/><text x="53" y="78.7" text-anchor="end" font-size="10" fill="#8a91a0">6.0千万</text><line x1="60" y1="16.0" x2="378" y2="16.0" stroke="#e8ebf1"/><text x="53" y="20.0" text-anchor="end" font-size="10" fill="#8a91a0">6.5千万</text><polygon points="60.0,175.0 88.9,154.5 117.8,137.9 146.7,90.8 175.6,63.9 204.5,66.6 233.5,108.1 262.4,67.1 291.3,60.0 320.2,82.2 349.1,68.2 378.0,33.0 378.0,192 60.0,192" fill="url(#fallbackMonth)"/><polyline points="60.0,175.0 88.9,154.5 117.8,137.9 146.7,90.8 175.6,63.9 204.5,66.6 233.5,108.1 262.4,67.1 291.3,60.0 320.2,82.2 349.1,68.2 378.0,33.0" fill="none" stroke="#5969d9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="60.0" y="220" text-anchor="middle" font-size="10" fill="#8a91a0">2025/09</text><text x="204.5" y="220" text-anchor="middle" font-size="10" fill="#8a91a0">2026/02</text><text x="378.0" y="220" text-anchor="middle" font-size="10" fill="#8a91a0">2026/08</text><circle cx="60.0" cy="175.0" r="8" fill="transparent"><title>2025/09  ¥50,839,675</title></circle><circle cx="60.0" cy="175.0" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="88.9" cy="154.5" r="8" fill="transparent"><title>2025/10  ¥52,612,963</title></circle><circle cx="88.9" cy="154.5" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="117.8" cy="137.9" r="8" fill="transparent"><title>2025/11  ¥54,045,612</title></circle><circle cx="117.8" cy="137.9" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="146.7" cy="90.8" r="8" fill="transparent"><title>2025/12  ¥58,131,156</title></circle><circle cx="146.7" cy="90.8" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="175.6" cy="63.9" r="8" fill="transparent"><title>2026/01  ¥60,452,462</title></circle><circle cx="175.6" cy="63.9" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="204.5" cy="66.6" r="8" fill="transparent"><title>2026/02  ¥60,223,105</title></circle><circle cx="204.5" cy="66.6" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="233.5" cy="108.1" r="8" fill="transparent"><title>2026/03  ¥56,626,973</title></circle><circle cx="233.5" cy="108.1" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="262.4" cy="67.1" r="8" fill="transparent"><title>2026/04  ¥60,181,017</title></circle><circle cx="262.4" cy="67.1" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="291.3" cy="60.0" r="8" fill="transparent"><title>2026/05  ¥60,790,153</title></circle><circle cx="291.3" cy="60.0" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="320.2" cy="82.2" r="8" fill="transparent"><title>2026/06  ¥58,871,504</title></circle><circle cx="320.2" cy="82.2" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="349.1" cy="68.2" r="8" fill="transparent"><title>2026/07  ¥60,084,898</title></circle><circle cx="349.1" cy="68.2" r="3.4" fill="#5969d9" pointer-events="none"/><circle cx="378.0" cy="33.0" r="8" fill="transparent"><title>2026/08  —</title></circle><circle cx="378.0" cy="33.0" r="3.4" fill="#5969d9" pointer-events="none"/></svg></div>
+<div class="sub" id="chartCaption">2025/09〜2026/08</div>
+</div>
+
+</section>
+<section id="invest" class="page">
+<div class="card">
+<h2>表示する年月</h2>
+
+<div class="css-period-picker">
+  <details class="css-dropdown">
+    <summary class="css-year-summary"><span class="css-selected-value y2020">2020年</span><span class="css-selected-value y2021">2021年</span><span class="css-selected-value y2022">2022年</span><span class="css-selected-value y2023">2023年</span><span class="css-selected-value y2024">2024年</span><span class="css-selected-value y2025">2025年</span><span class="css-selected-value y2026">2026年</span><span>⌄</span></summary>
+    <div class="css-drop-menu"><label for="p2020_12">2020年</label><label for="p2021_12">2021年</label><label for="p2022_12">2022年</label><label for="p2023_12">2023年</label><label for="p2024_12">2024年</label><label for="p2025_12">2025年</label><label for="p2026_08">2026年</label></div>
+  </details>
+  <details class="css-dropdown">
+    <summary class="css-month-summary"><span class="css-selected-value m01">1月</span><span class="css-selected-value m02">2月</span><span class="css-selected-value m03">3月</span><span class="css-selected-value m04">4月</span><span class="css-selected-value m05">5月</span><span class="css-selected-value m06">6月</span><span class="css-selected-value m07">7月</span><span class="css-selected-value m08">8月</span><span class="css-selected-value m09">9月</span><span class="css-selected-value m10">10月</span><span class="css-selected-value m11">11月</span><span class="css-selected-value m12">12月</span><span>⌄</span></summary>
+    <div class="css-drop-menu css-month-options"><div class="css-month-group for-2020"><label for="p2020_06">6月</label><label for="p2020_07">7月</label><label for="p2020_08">8月</label><label for="p2020_09">9月</label><label for="p2020_10">10月</label><label for="p2020_11">11月</label><label for="p2020_12">12月</label></div><div class="css-month-group for-2021"><label for="p2021_01">1月</label><label for="p2021_02">2月</label><label for="p2021_03">3月</label><label for="p2021_04">4月</label><label for="p2021_05">5月</label><label for="p2021_06">6月</label><label for="p2021_07">7月</label><label for="p2021_08">8月</label><label for="p2021_09">9月</label><label for="p2021_10">10月</label><label for="p2021_11">11月</label><label for="p2021_12">12月</label></div><div class="css-month-group for-2022"><label for="p2022_01">1月</label><label for="p2022_02">2月</label><label for="p2022_03">3月</label><label for="p2022_04">4月</label><label for="p2022_05">5月</label><label for="p2022_06">6月</label><label for="p2022_07">7月</label><label for="p2022_08">8月</label><label for="p2022_09">9月</label><label for="p2022_10">10月</label><label for="p2022_11">11月</label><label for="p2022_12">12月</label></div><div class="css-month-group for-2023"><label for="p2023_01">1月</label><label for="p2023_02">2月</label><label for="p2023_03">3月</label><label for="p2023_04">4月</label><label for="p2023_05">5月</label><label for="p2023_06">6月</label><label for="p2023_07">7月</label><label for="p2023_08">8月</label><label for="p2023_09">9月</label><label for="p2023_10">10月</label><label for="p2023_11">11月</label><label for="p2023_12">12月</label></div><div class="css-month-group for-2024"><label for="p2024_01">1月</label><label for="p2024_02">2月</label><label for="p2024_03">3月</label><label for="p2024_04">4月</label><label for="p2024_05">5月</label><label for="p2024_06">6月</label><label for="p2024_07">7月</label><label for="p2024_08">8月</label><label for="p2024_09">9月</label><label for="p2024_10">10月</label><label for="p2024_11">11月</label><label for="p2024_12">12月</label></div><div class="css-month-group for-2025"><label for="p2025_01">1月</label><label for="p2025_02">2月</label><label for="p2025_03">3月</label><label for="p2025_04">4月</label><label for="p2025_05">5月</label><label for="p2025_06">6月</label><label for="p2025_07">7月</label><label for="p2025_08">8月</label><label for="p2025_09">9月</label><label for="p2025_10">10月</label><label for="p2025_11">11月</label><label for="p2025_12">12月</label></div><div class="css-month-group for-2026"><label for="p2026_01">1月</label><label for="p2026_02">2月</label><label for="p2026_03">3月</label><label for="p2026_04">4月</label><label for="p2026_05">5月</label><label for="p2026_06">6月</label><label for="p2026_07">7月</label><label for="p2026_08">8月</label></div></div>
+  </details>
+</div>
+
+<div class="sub" style="margin-top:8px">過去月もJavaScriptなしで切り替えできます。</div>
+</div>
+
+    <div class="card">
+<h2>年間利回り</h2>
+<div class="kpi">
+  <div class="label">2026年1〜8月・CF調整後 暫定投資利回り</div>
+  <div class="value good">—</div>
+  <div class="sub">2025年12月投資資産 ¥51,745,207 → 2026年8月 — / 買付 ¥12,464,607 / 売却 ¥10,335,210。9月取引は未計上です。</div>
+</div>
+<h3>過去年利</h3>
+<div class="data-row"><span>2020年</span><b class="good">2.72%</b></div>
+<div class="data-row"><span>2021年</span><b class="good">29.74%</b></div>
+<div class="data-row"><span>2022年</span><b class="bad">-3.70%</b></div>
+<div class="data-row"><span>2023年</span><b class="good">28.06%</b></div>
+<div class="data-row"><span>2024年</span><b class="good">35.50%</b></div>
+<div class="data-row"><span>2025年</span><b class="good">36.21%</b></div>
+</div>
+</section>
+<section id="input" class="page">
+<div class="card">
+<h2>月次入力</h2>
+<div class="field"><label class="field-label">対象月</label><input type="month" id="recordMonth" value="2026-09"></div>
+<div class="action-row"><button class="secondary-btn" type="button" id="loadMonthBtn">この月を読込</button><button class="primary-btn" type="button" id="saveMonthBtn">この月を保存</button></div>
+<div class="note">保存後、同じ月を選んで「この月を読込」を押すと、口座内訳も含めて再表示できます。</div>
+
+<h3>銀行・預金等</h3>
+<div class="columns-head bank"><span>口座名</span><span>月末残高</span><span></span></div>
+<div id="bankEntries" class="list-box"></div>
+<button class="add-btn" type="button" id="addBankBtn">＋ 口座を追加</button>
+<div class="total-preview"><span>銀行・預金等 合計</span><b id="bankTotal">¥0</b></div>
+
+<h3>国内株式口座</h3>
+<div class="calc3">
+<label>口座全体 評価額 A<input type="number" id="jpVal" inputmode="numeric" placeholder="評価額"></label>
+<label>今月の株式買付 C<input type="number" id="jpBuy" inputmode="numeric" placeholder="買付"></label>
+<label>今月の株式売却<input type="number" id="jpSell" inputmode="numeric" placeholder="売却"></label>
+</div>
+<div class="reclass-box">
+<div class="calc3">
+<label>うちコモディティ評価額 B<input type="text" id="jpCommVal" inputmode="decimal" placeholder="120000+85000"></label>
+<label>今月のコモディティ買付 D<input type="text" id="jpCommBuy" inputmode="decimal" placeholder="30000+20000"></label>
+<label>今月のコモディティ売却<input type="text" id="jpCommSell" inputmode="decimal" placeholder="売却額"></label>
+</div>
+<div class="info">評価額だけ「株式=A−B」で振替。買付・売却は株式とコモディティを独立してそのまま集計します。</div>
+</div>
+
+<h3>米国株式口座</h3>
+<div class="calc3">
+<label>口座全体 評価額 A<input type="number" id="usVal" inputmode="numeric" placeholder="評価額"></label>
+<label>今月の株式買付 C<input type="number" id="usBuy" inputmode="numeric" placeholder="買付"></label>
+<label>今月の株式売却<input type="number" id="usSell" inputmode="numeric" placeholder="売却"></label>
+</div>
+<div class="reclass-box">
+<div class="calc3">
+<label>うちコモディティ評価額 B<input type="text" id="usCommVal" inputmode="decimal" placeholder="350000+420000"></label>
+<label>今月のコモディティ買付 D<input type="text" id="usCommBuy" inputmode="decimal" placeholder="50000+25000"></label>
+<label>今月のコモディティ売却<input type="text" id="usCommSell" inputmode="decimal" placeholder="売却額"></label>
+</div>
+</div>
+
+<h3>投資信託</h3>
+<div class="columns-head fund"><span>口座名</span><span>評価額</span><span>買付</span><span>売却</span><span></span></div>
+<div id="fundEntries" class="list-box"></div>
+<button class="add-btn" type="button" id="addFundBtn">＋ 口座を追加</button>
+<div class="total-preview"><span>投資信託 評価額</span><b id="fundValTotal">¥0</b><span>今月買付</span><b id="fundBuyTotal">¥0</b><span>今月売却</span><b id="fundSellTotal">¥0</b></div>
+
+<h3>金・コモディティ（直接保有）</h3>
+<div class="calc3">
+<label>現在評価額<input type="number" id="directCommVal" placeholder="評価額"></label>
+<label>今月買付<input type="number" id="directCommBuy" placeholder="買付"></label>
+<label>今月売却<input type="number" id="directCommSell" placeholder="売却"></label>
+</div>
+
+<h3>仮想通貨</h3>
+<div class="calc3">
+<label>現在評価額<input type="number" id="cryptoVal" placeholder="評価額"></label>
+<label>今月買付<input type="number" id="cryptoBuy" placeholder="買付"></label>
+<label>今月売却<input type="number" id="cryptoSell" placeholder="売却"></label>
+</div>
+
+<div class="kpi"><div class="label">入力内容から算出</div><div class="data-row"><span>投資資産</span><b id="inputInvestTotal">¥0</b></div><div class="data-row"><span>総資産</span><b id="inputGrandTotal">¥0</b></div></div>
+</div>
+</section>
+
+<section id="data" class="page">
+<div class="card">
+<h2>2026年 取引履歴取込</h2>
+<div class="data-row"><span>取込対象</span><b>2026年1月〜8月</b></div>
+<div class="data-row"><span>投資信託買付</span><b>¥1,200,000</b></div>
+<div class="data-row"><span>国内株買付</span><b>¥278,750</b></div>
+<div class="data-row"><span>米国株買付</span><b>¥480,332</b></div>
+<div class="data-row"><span>米国株売却</span><b>¥153,170</b></div>
+<div class="data-row"><span>コモディティ買付</span><b>¥10,505,525</b></div>
+<div class="data-row"><span>コモディティ売却</span><b>¥9,389,040</b></div>
+<div class="data-row"><span>仮想通貨売却</span><b>¥793,000</b></div>
+<div class="info">9月取引は9月末評価額との時点を合わせるため未計上です。SLVの2026年7月USD決済分のみ、画面表示の為替レートによる参考円換算を使用しています。</div>
+</div>
+
+<div class="card">
+<h2>買付・売却履歴</h2>
+<div class="sub">過去分を手入力する場合はこちら。今後の月次入力で保存した買付・売却は自動で履歴に含まれます。</div>
+<div class="calc2" style="margin-top:10px">
+<label>年月<input type="month" id="txMonth" value="2026-01"></label>
+<label>カテゴリ<select id="txCategory"><option>国内株</option><option>米国株</option><option>投資信託</option><option>コモディティ</option><option>仮想通貨</option></select></label>
+<label>区分<select id="txType"><option value="buy">買付</option><option value="sell">売却</option></select></label>
+<label>金額<input type="number" id="txAmount" placeholder="金額"></label>
+</div>
+<div class="field"><label class="field-label">メモ</label><input type="text" id="txMemo" placeholder="任意"></div>
+<button class="primary-btn" type="button" id="addTxBtn" style="width:100%">履歴を追加</button>
+<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>年月</th><th>カテゴリ</th><th>区分</th><th>金額</th><th>メモ</th><th></th></tr></thead><tbody id="txBody"></tbody></table></div>
+</div>
+
+<div class="card">
+<h2>データ管理</h2>
+<div class="action-row"><button class="primary-btn" type="button" id="excelBtn">Excel出力</button><button class="secondary-btn" type="button" id="jsonBtn">バックアップ</button></div>
+<div class="action-row"><button class="secondary-btn" type="button" id="importBtn">バックアップ復元</button><button class="danger-btn" type="button" id="resetBtn">入力データ初期化</button></div>
+<input type="file" id="importFile" accept=".json,application/json" style="display:none">
+<div class="note">Excel出力は「月次資産」「口座内訳」「買付売却履歴」「年間利回り」の4シート相当を1ファイルにまとめ、Excelで開ける .xls 形式で保存します。既存Excelの元データは変更しません。</div>
+</div>
+
+<div class="card">
+<h2>保存済み月次データ</h2>
+<div class="table-wrap"><table><thead><tr><th>年月</th><th>銀行</th><th>投資</th><th>総資産</th><th>買付</th><th>売却</th></tr></thead><tbody id="monthBody"></tbody></table></div>
+</div>
+</section>
+
+
+<div style="display:none">
+<select id="homeYear"><option value="2026" selected>2026</option></select>
+<select id="homeMonth"><option value="8" selected>8</option></select>
+<select id="investYear"><option value="2026" selected>2026</option></select>
+<select id="investMonth"><option value="8" selected>8</option></select>
+<span id="homePeriodNote"></span><span id="investPeriodNote"></span>
+<span id="homeTotal"></span><span id="homeBank"></span><span id="homeInvest"></span><span id="homeMom"></span><span id="homeYield"></span>
+<span id="reasonTotal"></span><span id="reasonInvest"></span><span id="reasonSaving"></span>
+<div id="allocationPie"></div><span id="allocationRatio"></span><span id="stockPct"></span><span id="commPct"></span><span id="cashPct"></span>
+<span id="allocationDetailNote"></span><span id="curJP"></span><span id="curUS"></span><span id="curFund"></span><span id="curComm"></span><span id="curCrypto"></span>
+<span id="yield2026"></span><span id="yieldNote"></span>
+</div>
+
+<nav class="bottom">
+<a href="#home"><span>⌂</span>ホーム</a>
+<a href="#invest"><span>◫</span>投資</a>
+<a href="#input"><span>＋</span>入力</a>
+<a href="#data"><span>▤</span>履歴</a>
+</nav>
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+const BASE_HISTORY = [];
+const BASE_YIELDS = {"2020": 2.7165147116, "2021": 29.7432204047, "2022": -3.7002170701, "2023": 28.0613026143, "2024": 35.4968968256, "2025": 36.2079175695};
+const MONTHS_BY_YEAR = {"2020": [6, 7, 8, 9, 10, 11, 12], "2021": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "2022": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "2023": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "2024": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "2025": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "2026": [1, 2, 3, 4, 5, 6, 7, 8]};
+const STORAGE_KEY = 'assetManagerV1_20260913_trade_import_v1';
+
+const $ = id => document.getElementById(id);
+const num = v => Number(v || 0);
+const yen = v => '¥' + Math.round(num(v)).toLocaleString('ja-JP');
+const signedYen = v => (num(v)>=0?'+':'−') + yen(Math.abs(num(v)));
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function simpleCalc(v){
+  const s=String(v||'').replace(/,/g,'').replace(/×/g,'*').replace(/÷/g,'/').trim();
+  if(!s) return 0;
+  if(!/^[0-9+\-*/().\s]+$/.test(s)) return NaN;
+  try { const r=Function('"use strict";return ('+s+')')(); return Number.isFinite(r)?r:NaN; } catch(e) { return NaN; }
+}
+
+function defaultState(){ return {months:{}, transactions:[]}; }
+function loadState(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultState(); }
+  catch(e) { return defaultState(); }
+}
+let state=loadState();
+function saveState(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+function toast(msg){ const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2200); }
+
+function addBankRow(name='',value=0){
+ const r=document.createElement('div');r.className='entry-row bank';
+ r.innerHTML=`<input class="bank-name" type="text" placeholder="口座名" value="${esc(name)}"><input class="bank-value" type="number" placeholder="残高" value="${value||''}"><button class="remove-btn" type="button">−</button>`;
+ r.querySelector('.remove-btn').onclick=()=>{r.remove();updateInputTotals()};
+ r.querySelectorAll('input').forEach(i=>i.addEventListener('input',updateInputTotals));
+ $('bankEntries').appendChild(r);
+}
+function addFundRow(name='',value=0,buy=0,sell=0){
+ const r=document.createElement('div');r.className='entry-row fund';
+ r.innerHTML=`<input class="fund-name" type="text" placeholder="口座名" value="${esc(name)}"><input class="fund-value" type="number" placeholder="評価額" value="${value||''}"><input class="fund-buy" type="number" placeholder="買付" value="${buy||''}"><input class="fund-sell" type="number" placeholder="売却" value="${sell||''}"><button class="remove-btn" type="button">−</button>`;
+ r.querySelector('.remove-btn').onclick=()=>{r.remove();updateInputTotals()};
+ r.querySelectorAll('input').forEach(i=>i.addEventListener('input',updateInputTotals));
+ $('fundEntries').appendChild(r);
+}
+function resetRows(){
+ $('bankEntries').innerHTML=''; $('fundEntries').innerHTML='';
+ addBankRow(); addFundRow();
+}
+
+function collectBank(){
+ return [...document.querySelectorAll('#bankEntries .entry-row')].map(r=>({
+  name:r.querySelector('.bank-name').value.trim(), value:num(r.querySelector('.bank-value').value)
+ })).filter(x=>x.name||x.value);
+}
+function collectFunds(){
+ return [...document.querySelectorAll('#fundEntries .entry-row')].map(r=>({
+  name:r.querySelector('.fund-name').value.trim(), value:num(r.querySelector('.fund-value').value),
+  buy:num(r.querySelector('.fund-buy').value), sell:num(r.querySelector('.fund-sell').value)
+ })).filter(x=>x.name||x.value||x.buy||x.sell);
+}
+
+function readForm(){
+ const jpCommVal=simpleCalc($('jpCommVal').value), usCommVal=simpleCalc($('usCommVal').value);
+ const jpCommBuy=simpleCalc($('jpCommBuy').value), usCommBuy=simpleCalc($('usCommBuy').value);
+ const jpCommSell=simpleCalc($('jpCommSell').value), usCommSell=simpleCalc($('usCommSell').value);
+ return {
+  banks:collectBank(), funds:collectFunds(),
+  jpVal:num($('jpVal').value), jpBuy:num($('jpBuy').value), jpSell:num($('jpSell').value),
+  jpCommVal:Number.isFinite(jpCommVal)?jpCommVal:0, jpCommBuy:Number.isFinite(jpCommBuy)?jpCommBuy:0, jpCommSell:Number.isFinite(jpCommSell)?jpCommSell:0,
+  usVal:num($('usVal').value), usBuy:num($('usBuy').value), usSell:num($('usSell').value),
+  usCommVal:Number.isFinite(usCommVal)?usCommVal:0, usCommBuy:Number.isFinite(usCommBuy)?usCommBuy:0, usCommSell:Number.isFinite(usCommSell)?usCommSell:0,
+  directCommVal:num($('directCommVal').value), directCommBuy:num($('directCommBuy').value), directCommSell:num($('directCommSell').value),
+  cryptoVal:num($('cryptoVal').value), cryptoBuy:num($('cryptoBuy').value), cryptoSell:num($('cryptoSell').value)
+ };
+}
+function totalsFrom(m){
+ const bank=m.banks.reduce((a,x)=>a+x.value,0);
+ const fundVal=m.funds.reduce((a,x)=>a+x.value,0);
+ const fundBuy=m.funds.reduce((a,x)=>a+x.buy,0);
+ const fundSell=m.funds.reduce((a,x)=>a+x.sell,0);
+ const jpStock=Math.max(0,m.jpVal-m.jpCommVal);
+ const usStock=Math.max(0,m.usVal-m.usCommVal);
+ const commodity=m.directCommVal+m.jpCommVal+m.usCommVal;
+ const invest=jpStock+usStock+fundVal+commodity+m.cryptoVal;
+ const buyStock=m.jpBuy+m.usBuy+fundBuy;
+ const sellStock=m.jpSell+m.usSell+fundSell;
+ const buyComm=m.directCommBuy+m.jpCommBuy+m.usCommBuy;
+ const sellComm=m.directCommSell+m.jpCommSell+m.usCommSell;
+ const buyCrypto=m.cryptoBuy, sellCrypto=m.cryptoSell;
+ const buy=buyStock+buyComm+buyCrypto, sell=sellStock+sellComm+sellCrypto;
+ return {bank,fundVal,fundBuy,fundSell,jpStock,usStock,commodity,invest,total:bank+invest,buyStock,sellStock,buyComm,sellComm,buyCrypto,sellCrypto,buy,sell};
+}
+function updateInputTotals(){
+ const t=totalsFrom(readForm());
+ $('bankTotal').textContent=yen(t.bank);$('fundValTotal').textContent=yen(t.fundVal);$('fundBuyTotal').textContent=yen(t.fundBuy);$('fundSellTotal').textContent=yen(t.fundSell);
+ $('inputInvestTotal').textContent=yen(t.invest);$('inputGrandTotal').textContent=yen(t.total);
+}
+
+function saveMonth(){
+ const month=$('recordMonth').value;
+ if(!month) return toast('対象月を選択してください');
+ const form=readForm(); const t=totalsFrom(form);
+ state.months[month]={...form, savedAt:new Date().toISOString()};
+ saveState(); renderAll(); toast(month.replace('-','年')+'月を保存しました');
+}
+function setVal(id,v){ $(id).value=(v??'')===0?'':(v??''); }
+function loadMonth(month){
+ const m=state.months[month];
+ $('recordMonth').value=month;
+ if(!m){ resetRows(); ['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>$(id).value=''); updateInputTotals(); return toast('保存データがない月です'); }
+ $('bankEntries').innerHTML=''; (m.banks?.length?m.banks:[{}]).forEach(x=>addBankRow(x.name,x.value));
+ $('fundEntries').innerHTML=''; (m.funds?.length?m.funds:[{}]).forEach(x=>addFundRow(x.name,x.value,x.buy,x.sell));
+ ['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>setVal(id,m[id]));
+ updateInputTotals(); toast(month.replace('-','年')+'月を読み込みました');
+}
+
+function monthlyTransactions(month,m){
+ const t=totalsFrom(m), arr=[];
+ const push=(cat,type,amt,memo)=>{if(amt>0)arr.push({month,category:cat,type,amount:amt,memo,source:'月次入力'})};
+ push('国内株','buy',m.jpBuy,'月次入力');push('国内株','sell',m.jpSell,'月次入力');
+ push('米国株','buy',m.usBuy,'月次入力');push('米国株','sell',m.usSell,'月次入力');
+ push('投資信託','buy',t.fundBuy,'月次入力');push('投資信託','sell',t.fundSell,'月次入力');
+ push('コモディティ','buy',m.jpCommBuy+m.usCommBuy+m.directCommBuy,'月次入力');push('コモディティ','sell',m.jpCommSell+m.usCommSell+m.directCommSell,'月次入力');
+ push('仮想通貨','buy',m.cryptoBuy,'月次入力');push('仮想通貨','sell',m.cryptoSell,'月次入力');
+ return arr;
+}
+function allTransactions(){
+ let arr=[...state.transactions];
+ Object.entries(state.months).forEach(([month,m])=>arr.push(...monthlyTransactions(month,m)));
+ return arr.sort((a,b)=>a.month.localeCompare(b.month));
+}
+
+function combinedHistory(){
+ const map={};
+ BASE_HISTORY.forEach(x=>map[x.month]={...x});
+ Object.entries(state.months).forEach(([month,m])=>{
+  const t=totalsFrom(m); const [y,mo]=month.split('-').map(Number);
+  map[month]={month,label:`${y}/${String(mo).padStart(2,'0')}`,year:y,m:mo,bank:t.bank,invest:t.invest,total:t.total,source:'入力'};
+ });
+ return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month));
+}
+
+function annualYield(year){
+ const h=combinedHistory().filter(x=>x.year===year);
+ if(!h.length) return null;
+ const start=h[0].invest, end=h[h.length-1].invest;
+ const tx=allTransactions().filter(x=>Number(x.month.slice(0,4))===year);
+ const buys=tx.filter(x=>x.type==='buy').reduce((a,x)=>a+num(x.amount),0);
+ const sells=tx.filter(x=>x.type==='sell').reduce((a,x)=>a+num(x.amount),0);
+ const cf=buys-sells;
+ const denom=start+cf/2;
+ if(!denom) return null;
+ return {rate:(end-start-cf)/denom*100,start,end,buys,sells,cf,count:tx.length,last:h[h.length-1].month};
+}
+
+function investmentGainForLatest(){
+ const h=combinedHistory(); if(h.length<2)return null;
+ const cur=h[h.length-1],pr=h[h.length-2];
+ const tx=allTransactions().filter(x=>x.month===cur.month);
+ const buy=tx.filter(x=>x.type==='buy').reduce((a,x)=>a+num(x.amount),0);
+ const sell=tx.filter(x=>x.type==='sell').reduce((a,x)=>a+num(x.amount),0);
+ const invGain=cur.invest-pr.invest-buy+sell;
+ return {cur,pr,buy,sell,invGain,totalChange:cur.total-pr.total,saving:(cur.total-pr.total)-invGain};
+}
+
+
+function availablePeriods(){
+ return combinedHistory().map(x=>({year:x.year,month:x.m,key:x.month,label:x.label}));
+}
+function fillPeriodPair(yearId,monthId,preferredKey){
+ const periods=availablePeriods();
+ const pref=preferredKey || periods.at(-1).key;
+ const [py,pm]=pref.split('-').map(Number);
+ const yEl=$(yearId),mEl=$(monthId);
+ const years=[...new Set(periods.map(x=>x.year))];
+ yEl.innerHTML=years.map(y=>`<option value="${y}" ${y===py?'selected':''}>${y}年</option>`).join('');
+ const ms=periods.filter(x=>x.year===Number(yEl.value)).map(x=>x.month);
+ mEl.innerHTML=ms.map(m=>`<option value="${m}" ${m===pm?'selected':''}>${m}月</option>`).join('');
+ if(!ms.includes(Number(mEl.value))) mEl.value=Math.max(...ms);
+}
+function selectedKey(yearId,monthId){
+ const y=Number($(yearId).value),m=Number($(monthId).value);
+ return `${y}-${String(m).padStart(2,'0')}`;
+}
+function periodRecord(key){
+ return combinedHistory().find(x=>x.month===key)||null;
+}
+function previousRecord(key){
+ const h=combinedHistory(),idx=h.findIndex(x=>x.month===key);
+ return idx>0?h[idx-1]:null;
+}
+function breakdownForMonth(key){
+ const rec=periodRecord(key);
+ if(!rec)return null;
+ const saved=state.months[key];
+ if(saved){
+   const t=totalsFrom(saved);
+   return {jp:t.jpStock,us:t.usStock,fund:t.fundVal,comm:t.commodity,crypto:saved.cryptoVal,cash:t.bank,detailed:true,source:'保存済み入力'};
+ }
+ if(key==='2026-08'){
+   return {jp:1501010,us:5610168,fund:32257607,comm:17792599,crypto:0,cash:rec.bank,detailed:true,source:'既存Excel最新内訳'};
+ }
+ return {jp:0,us:0,fund:0,comm:0,crypto:0,cash:rec.bank,detailed:false,source:'総額履歴のみ'};
+}
+
+function renderHome(){
+ const periods=availablePeriods();
+ const fallback=periods.at(-1).key;
+ if(!$('homeYear').options.length) fillPeriodPair('homeYear','homeMonth',fallback);
+ const key=selectedKey('homeYear','homeMonth');
+ const cur=periodRecord(key)||periodRecord(fallback);
+ const pr=previousRecord(cur.month)||cur;
+ $('headerDate').textContent=`${cur.year}年${cur.m}月時点`;
+ $('homeTotal').textContent=yen(cur.total);
+ $('homeBank').textContent=yen(cur.bank);
+ $('homeInvest').textContent=yen(cur.invest);
+ $('homeMom').textContent='前月比 '+signedYen(cur.total-pr.total);
+ const yr=annualYield(cur.year);
+ $('homeYield').textContent=yr?`${cur.year}利回り ${yr.rate>=0?'+':''}${yr.rate.toFixed(2)}%`:`${cur.year}利回り 履歴入力後更新`;
+ $('homePeriodNote').textContent=`${cur.label}時点：総資産 ${yen(cur.total)} / 銀行・預金等 ${yen(cur.bank)} / 投資資産 ${yen(cur.invest)}`;
+ const tx=allTransactions().filter(x=>x.month===cur.month);
+ const buy=tx.filter(x=>x.type==='buy').reduce((a,x)=>a+num(x.amount),0);
+ const sell=tx.filter(x=>x.type==='sell').reduce((a,x)=>a+num(x.amount),0);
+ const invGain=cur.invest-pr.invest-buy+sell;
+ const totalChange=cur.total-pr.total;
+ $('reasonTotal').textContent=signedYen(totalChange);
+ $('reasonInvest').textContent=signedYen(invGain);
+ $('reasonSaving').textContent=signedYen(totalChange-invGain);
+}
+
+function currentBreakdown(){
+ const periods=availablePeriods(),fallback=periods.at(-1).key;
+ if(!$('investYear').options.length) fillPeriodPair('investYear','investMonth',fallback);
+ return breakdownForMonth(selectedKey('investYear','investMonth'))||breakdownForMonth(fallback);
+}
+function renderInvest(){
+ const periods=availablePeriods(),fallback=periods.at(-1).key;
+ if(!$('investYear').options.length) fillPeriodPair('investYear','investMonth',fallback);
+ const key=selectedKey('investYear','investMonth');
+ const rec=periodRecord(key)||periodRecord(fallback);
+ const b=breakdownForMonth(rec.month);
+ $('investPeriodNote').textContent=`${rec.label}時点の資産配分・投資内訳を表示中`;
+
+ if(b.detailed){
+   $('curJP').textContent=yen(b.jp);
+   $('curUS').textContent=yen(b.us);
+   $('curFund').textContent=yen(b.fund);
+   $('curComm').textContent=yen(b.comm);
+   $('curCrypto').textContent=yen(b.crypto);
+   const stock=b.jp+b.us+b.fund,comm=b.comm+b.crypto,total=stock+comm+b.cash;
+   const sp=total?stock/total*100:0,cp=total?comm/total*100:0,kp=total?b.cash/total*100:0;
+   $('stockPct').textContent=sp.toFixed(1)+'%';
+   $('commPct').textContent=cp.toFixed(1)+'%';
+   $('cashPct').textContent=kp.toFixed(1)+'%';
+   $('allocationRatio').textContent=`${Math.round(sp)} : ${Math.round(cp)} : ${Math.round(kp)}`;
+   $('allocationPie').style.background=`conic-gradient(#5969d9 0 ${sp}%,#d49c3d ${sp}% ${sp+cp}%,#3d9c75 ${sp+cp}% 100%)`;
+   $('allocationDetailNote').textContent=`${rec.label}：${b.source}を使った3分類の資産配分です。`;
+ } else {
+   $('curJP').textContent='—';
+   $('curUS').textContent='—';
+   $('curFund').textContent='—';
+   $('curComm').textContent='—';
+   $('curCrypto').textContent='—';
+   const investPct=rec.total?rec.invest/rec.total*100:0;
+   const cashPct=rec.total?rec.bank/rec.total*100:0;
+   $('stockPct').textContent=investPct.toFixed(1)+'%';
+   $('commPct').textContent='—';
+   $('cashPct').textContent=cashPct.toFixed(1)+'%';
+   $('allocationRatio').textContent=`${Math.round(investPct)} : — : ${Math.round(cashPct)}`;
+   $('allocationPie').style.background=`conic-gradient(#5969d9 0 ${investPct}%,#3d9c75 ${investPct}% 100%)`;
+   $('allocationDetailNote').textContent=`${rec.label}は総投資額と現金額までは確認できますが、株式/コモディティ別の詳細内訳が未登録です。詳細データを追加すれば当時の3分類比率まで表示できます。`;
+ }
+ const y=annualYield(rec.year);
+ if(y){
+   $('yield2026').textContent=(y.rate>=0?'+':'')+y.rate.toFixed(2)+'%';
+   $('yield2026').className='value '+(y.rate>=0?'good':'bad');
+   $('yieldNote').textContent=`${rec.year}年：年初投資資産 ${yen(y.start)} / 期末・現在 ${yen(y.end)} / 買付 ${yen(y.buys)} / 売却 ${yen(y.sells)}`;
+ } else {
+   $('yield2026').textContent='履歴入力後';
+   $('yieldNote').textContent='画像から取り込んだ2026年1〜8月の買付・売却履歴を反映して自動計算します。';
+ }
+}
+
+function shortY(v){
+ if(v>=100000000)return (v/100000000).toFixed(1)+'億';
+ if(v>=10000000)return (v/10000000).toFixed(1)+'千万';
+ if(v>=1000000)return Math.round(v/1000000)+'百万';
+ return Math.round(v/10000)+'万';
+}
+function svgDynamic(data,annual=false){
+ if(!data.length)return '';
+ const W=390,H=230,L=60,R=12,T=16,B=38;
+ const vals=data.map(d=>d.total);let mn=Math.min(...vals),mx=Math.max(...vals),pad=(mx-mn)*.12||mx*.08;mn-=pad;mx+=pad;
+ const x=i=>L+(W-L-R)*(i/Math.max(1,data.length-1)),y=v=>T+(H-T-B)*(1-(v-mn)/(mx-mn));
+ let s='<svg class="asset-svg" viewBox="0 0 390 230">';
+ for(let k=0;k<4;k++){const v=mn+(mx-mn)*k/3,yy=y(v);s+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="#e8ebf1"/><text x="${L-7}" y="${yy+4}" text-anchor="end" font-size="10" fill="#8a91a0">${shortY(v)}</text>`;}
+ const pts=data.map((d,i)=>`${x(i)},${y(d.total)}`).join(' ');
+ s+=`<polyline points="${pts}" fill="none" stroke="#5969d9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+ [0,Math.floor((data.length-1)/2),data.length-1].filter((v,i,a)=>a.indexOf(v)===i).forEach(i=>s+=`<text x="${x(i)}" y="220" text-anchor="middle" font-size="10" fill="#8a91a0">${annual?data[i].year:data[i].label}</text>`);
+ data.forEach((d,i)=>s+=`<circle cx="${x(i)}" cy="${y(d.total)}" r="8" fill="transparent"><title>${d.label} ${yen(d.total)}</title></circle><circle cx="${x(i)}" cy="${y(d.total)}" r="3.4" fill="#5969d9" pointer-events="none"/>`);
+ return s+'</svg>';
+}
+let chartMode='month';
+function fillGraphOptions(){
+ const h=combinedHistory(),ys=[...new Set(h.map(x=>x.year))];
+ const currentY=Number($('graphYear').value)||h.at(-1).year;
+ $('graphYear').innerHTML=ys.map(y=>`<option value="${y}" ${y===currentY?'selected':''}>${y}年</option>`).join('');
+ fillGraphMonths();
+}
+function fillGraphMonths(){
+ const h=combinedHistory(),y=Number($('graphYear').value);
+ const ms=h.filter(x=>x.year===y).map(x=>x.m);
+ const current=Number($('graphMonth').value);
+ $('graphMonth').innerHTML=ms.map(m=>`<option value="${m}" ${m===current?'selected':''}>${m}月</option>`).join('');
+ if(!ms.includes(current)) $('graphMonth').value=Math.max(...ms);
+}
+function renderChart(){
+ const h=combinedHistory();
+ if(chartMode==='year'){
+  const map={};h.forEach(x=>map[x.year]=x);const data=Object.keys(map).sort().map(k=>map[k]);
+  $('chartBox').innerHTML=svgDynamic(data,true);$('chartCaption').textContent='全期間（各年の最終記録）';$('monthControls').style.display='none';return;
+ }
+ $('monthControls').style.display='block';
+ const y=Number($('graphYear').value),m=Number($('graphMonth').value);
+ let idx=h.findIndex(x=>x.year===y&&x.m===m);if(idx<0)idx=h.length-1;
+ const data=h.slice(Math.max(0,idx-11),idx+1);
+ $('chartBox').innerHTML=svgDynamic(data,false);$('chartCaption').textContent=data[0].label+'〜'+data.at(-1).label;
+}
+
+function renderTransactions(){
+ const arr=allTransactions().slice().reverse();
+ $('txBody').innerHTML=arr.map((x,i)=>`<tr><td>${esc(x.month)}</td><td>${esc(x.category)}</td><td>${x.type==='buy'?'買付':'売却'}</td><td>${yen(x.amount)}</td><td>${esc(x.memo||'')}</td><td>${x.source==='月次入力'?'<span class="status">月次</span>':(x.source==='画像取込'?'<span class="status">画像取込</span>':`<button class="danger-btn" style="padding:5px 7px" onclick="deleteManualTx('${x.id}')">削除</button>`)}</td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#8a91a0">履歴なし</td></tr>';
+}
+window.deleteManualTx=id=>{state.transactions=state.transactions.filter(x=>x.id!==id);saveState();renderAll();toast('履歴を削除しました')};
+function addManualTx(){
+ const amount=num($('txAmount').value);if(!$('txMonth').value||amount<=0)return toast('年月と金額を入力してください');
+ state.transactions.push({id:'tx_'+Date.now(),month:$('txMonth').value,category:$('txCategory').value,type:$('txType').value,amount,memo:$('txMemo').value.trim(),source:'手入力'});
+ saveState();$('txAmount').value='';$('txMemo').value='';renderAll();toast('履歴を追加しました');
+}
+
+function renderMonths(){
+ const rows=Object.entries(state.months).sort((a,b)=>b[0].localeCompare(a[0]));
+ $('monthBody').innerHTML=rows.map(([month,m])=>{const t=totalsFrom(m);return `<tr><td>${month}</td><td>${yen(t.bank)}</td><td>${yen(t.invest)}</td><td>${yen(t.total)}</td><td>${yen(t.buy)}</td><td>${yen(t.sell)}</td></tr>`}).join('') || '<tr><td colspan="6" style="text-align:center;color:#8a91a0">まだ保存データはありません</td></tr>';
+}
+
+function xmlEsc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function xlsCell(v,type='String'){return `<Cell><Data ss:Type="${type}">${xmlEsc(v)}</Data></Cell>`}
+function xlsRow(vals){return '<Row>'+vals.map(v=>xlsCell(v.v,v.t||'String')).join('')+'</Row>'}
+function exportExcel(){
+ const h=combinedHistory(), tx=allTransactions();
+ let bankRows=[],fundRows=[];
+ Object.entries(state.months).sort().forEach(([month,m])=>{
+  m.banks.forEach(x=>bankRows.push([month,'銀行・預金等',x.name,x.value,'','']));
+  m.funds.forEach(x=>fundRows.push([month,'投資信託',x.name,x.value,x.buy,x.sell]));
+ });
+ const years=[...new Set(h.map(x=>x.year))];
+ const yieldRows=years.map(y=>{const z=annualYield(y);return [y,z?z.start:'',z?z.end:'',z?z.buys:'',z?z.sells:'',z?z.rate:'',BASE_YIELDS[y]??'']});
+
+ const sheet=(name,rows)=>`<Worksheet ss:Name="${xmlEsc(name)}"><Table>${rows.join('')}</Table></Worksheet>`;
+ const monthly=[xlsRow([{v:'年月'},{v:'銀行・預金等'},{v:'投資資産'},{v:'総資産'},{v:'データ元'}])].concat(h.map(x=>xlsRow([{v:x.month},{v:x.bank,t:'Number'},{v:x.invest,t:'Number'},{v:x.total,t:'Number'},{v:x.source}])));
+ const accounts=[xlsRow([{v:'年月'},{v:'分類'},{v:'口座名'},{v:'評価額/残高'},{v:'買付'},{v:'売却'}])].concat([...bankRows,...fundRows].map(r=>xlsRow(r.map((v,i)=>({v,t:i>=3&&v!==''?'Number':'String'})))));
+ const txrows=[xlsRow([{v:'年月'},{v:'カテゴリ'},{v:'区分'},{v:'金額'},{v:'メモ'},{v:'入力元'}])].concat(tx.map(x=>xlsRow([{v:x.month},{v:x.category},{v:x.type==='buy'?'買付':'売却'},{v:x.amount,t:'Number'},{v:x.memo||''},{v:x.source||''}])));
+ const yields=[xlsRow([{v:'年'},{v:'年初投資資産'},{v:'期末/現在投資資産'},{v:'買付'},{v:'売却'},{v:'CF調整利回り%'},{v:'既存Excel年利%'}])].concat(yieldRows.map(r=>xlsRow(r.map((v,i)=>({v,t:i===0?'Number':(v===''?'String':'Number')})))));
+ const xml=`<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${sheet('月次資産',monthly)}${sheet('口座内訳',accounts)}${sheet('買付売却履歴',txrows)}${sheet('年間利回り',yields)}</Workbook>`;
+ downloadBlob(new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'}),`資産管理_${combinedHistory().at(-1).month}.xls`);
+ toast('Excelファイルを出力しました');
+}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+function exportJson(){downloadBlob(new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),state},null,2)],{type:'application/json'}),'資産管理バックアップ.json');toast('バックアップを保存しました')}
+function importJson(file){
+ const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);state=x.state||x;saveState();renderAll();toast('バックアップを復元しました')}catch(e){toast('バックアップファイルを確認してください')}};r.readAsText(file);
+}
+function renderAll(){renderHome();renderInvest();renderTransactions();renderMonths();fillGraphOptions();renderChart();}
+
+$('addBankBtn').onclick=()=>addBankRow();
+$('addFundBtn').onclick=()=>addFundRow();
+$('saveMonthBtn').onclick=saveMonth;
+$('loadMonthBtn').onclick=()=>loadMonth($('recordMonth').value);
+$('addTxBtn').onclick=addManualTx;
+$('excelBtn').onclick=exportExcel;$('jsonBtn').onclick=exportJson;
+$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=e=>{if(e.target.files[0])importJson(e.target.files[0])};
+$('resetBtn').onclick=()=>{if(confirm('このアプリで保存した入力データを初期化しますか？既存Excelのデータは消えません。')){state=defaultState();saveState();resetRows();renderAll();toast('入力データを初期化しました')}};
+$('monthMode').onclick=()=>{chartMode='month';$('monthMode').classList.add('active');$('yearMode').classList.remove('active');renderChart()};
+$('yearMode').onclick=()=>{chartMode='year';$('yearMode').classList.add('active');$('monthMode').classList.remove('active');renderChart()};
+$('graphYear').onchange=()=>{fillGraphMonths();renderChart()};$('graphMonth').onchange=renderChart;
+['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>$(id).addEventListener('input',updateInputTotals));
+
+
+$('homeYear').onchange=()=>{
+ const y=Number($('homeYear').value);
+ const ps=availablePeriods().filter(x=>x.year===y);
+ $('homeMonth').innerHTML=ps.map(x=>`<option value="${x.month}">${x.month}月</option>`).join('');
+ $('homeMonth').value=ps.at(-1).month;
+ renderHome();
+};
+$('homeMonth').onchange=renderHome;
+$('investYear').onchange=()=>{
+ const y=Number($('investYear').value);
+ const ps=availablePeriods().filter(x=>x.year===y);
+ $('investMonth').innerHTML=ps.map(x=>`<option value="${x.month}">${x.month}月</option>`).join('');
+ $('investMonth').value=ps.at(-1).month;
+ renderInvest();
+};
+$('investMonth').onchange=renderInvest;
+
+resetRows();
+fillPeriodPair('homeYear','homeMonth',availablePeriods().at(-1).key);
+fillPeriodPair('investYear','investMonth',availablePeriods().at(-1).key);
+updateInputTotals();
+renderAll();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+}
+</script></body>
+</html>
