@@ -843,19 +843,33 @@ function investmentGainForLatest(){
 }
 
 
+function currentPeriod(){
+ const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()+1,key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`};
+}
 function availablePeriods(){
- return combinedHistory().map(x=>({year:x.year,month:x.m,key:x.month,label:x.label}));
+ const p=combinedHistory().map(x=>({year:x.year,month:x.m,key:x.month,label:x.label}));
+ if(!p.length){ const c=currentPeriod(); return [{...c,label:`${c.year}/${String(c.month).padStart(2,'0')}`}]; }
+ return p;
+}
+function latestInputPeriod(){
+ const keys=Object.keys(state.months||{}).sort();
+ if(keys.length){ const [year,month]=keys.at(-1).split('-').map(Number); return {year,month,key:keys.at(-1)}; }
+ return currentPeriod();
 }
 function fillPeriodPair(yearId,monthId,preferredKey){
  const periods=availablePeriods();
- const pref=preferredKey || periods.at(-1).key;
- const [py,pm]=pref.split('-').map(Number);
+ const pref=preferredKey || latestInputPeriod().key;
+ let [py,pm]=pref.split('-').map(Number);
  const yEl=$(yearId),mEl=$(monthId);
- const years=[...new Set(periods.map(x=>x.year))];
+ let years=[...new Set(periods.map(x=>x.year))];
+ if(!years.includes(py)) years.push(py);
+ years.sort((a,b)=>a-b);
  yEl.innerHTML=years.map(y=>`<option value="${y}" ${y===py?'selected':''}>${y}年</option>`).join('');
- const ms=periods.filter(x=>x.year===Number(yEl.value)).map(x=>x.month);
+ let ms=periods.filter(x=>x.year===py).map(x=>x.month);
+ if(!ms.includes(pm)) ms.push(pm);
+ ms=[...new Set(ms)].sort((a,b)=>a-b);
  mEl.innerHTML=ms.map(m=>`<option value="${m}" ${m===pm?'selected':''}>${m}月</option>`).join('');
- if(!ms.includes(Number(mEl.value))) mEl.value=Math.max(...ms);
+ yEl.value=String(py); mEl.value=String(pm);
 }
 function selectedKey(yearId,monthId){
  const y=Number($(yearId).value),m=Number($(monthId).value);
@@ -888,6 +902,15 @@ function renderHome(){
  if(!$('homeYear').options.length) fillPeriodPair('homeYear','homeMonth',fallback);
  const key=selectedKey('homeYear','homeMonth');
  const cur=periodRecord(key)||periodRecord(fallback);
+ if(!cur){
+   const [yy,mm]=key.split('-').map(Number);
+   $('headerDate').textContent=`${yy}年${mm}月`;
+   $('homeTotal').textContent='—'; $('homeBank').textContent='—'; $('homeInvest').textContent='—';
+   $('homeMom').textContent='前月比 —'; $('homeYield').textContent=`${yy}利回り —`;
+   $('homePeriodNote').textContent='この月のデータはまだありません。入力タブから月次データを保存してください。';
+   $('reasonTotal').textContent='—'; $('reasonInvest').textContent='—'; $('reasonSaving').textContent='—';
+   return;
+ }
  const pr=previousRecord(cur.month)||cur;
  $('headerDate').textContent=`${cur.year}年${cur.m}月時点`;
  $('homeTotal').textContent=yen(cur.total);
@@ -917,6 +940,12 @@ function renderInvest(){
  if(!$('investYear').options.length) fillPeriodPair('investYear','investMonth',fallback);
  const key=selectedKey('investYear','investMonth');
  const rec=periodRecord(key)||periodRecord(fallback);
+ if(!rec){
+   $('investPeriodNote').textContent='この月の投資データはまだありません。';
+   $('curJP').textContent='—'; $('curUS').textContent='—'; $('curFund').textContent='—'; $('curComm').textContent='—'; $('curCrypto').textContent='—';
+   $('allocationRatio').textContent='—'; $('stockPct').textContent='—'; $('commPct').textContent='—'; $('cashPct').textContent='—';
+   return;
+ }
  const b=breakdownForMonth(rec.month);
  $('investPeriodNote').textContent=`${rec.label}時点の資産配分・投資内訳を表示中`;
 
@@ -980,30 +1009,49 @@ function svgDynamic(data,annual=false){
  return s+'</svg>';
 }
 let chartMode='month';
-function fillGraphOptions(){
- const h=combinedHistory(),ys=[...new Set(h.map(x=>x.year))];
- const currentY=Number($('graphYear').value)||h.at(-1).year;
- $('graphYear').innerHTML=ys.map(y=>`<option value="${y}" ${y===currentY?'selected':''}>${y}年</option>`).join('');
- fillGraphMonths();
+function fillGraphOptions(preferredKey){
+ const h=combinedHistory();
+ const c=preferredKey ? parsePeriodKey(preferredKey) : latestInputPeriod();
+ const ys=[...new Set(h.map(x=>x.year))];
+ if(!ys.includes(c.year)) ys.push(c.year);
+ ys.sort((a,b)=>a-b);
+ $('graphYear').innerHTML=ys.map(y=>`<option value="${y}" ${y===c.year?'selected':''}>${y}年</option>`).join('');
+ $('graphYear').value=String(c.year);
+ fillGraphMonths(c.month);
 }
-function fillGraphMonths(){
+function parsePeriodKey(key){
+ const [year,month]=String(key).split('-').map(Number); return {year,month,key};
+}
+function fillGraphMonths(preferredMonth){
  const h=combinedHistory(),y=Number($('graphYear').value);
- const ms=h.filter(x=>x.year===y).map(x=>x.m);
- const current=Number($('graphMonth').value);
- $('graphMonth').innerHTML=ms.map(m=>`<option value="${m}" ${m===current?'selected':''}>${m}月</option>`).join('');
- if(!ms.includes(current)) $('graphMonth').value=Math.max(...ms);
+ let ms=h.filter(x=>x.year===y).map(x=>x.m);
+ const pm=Number(preferredMonth)||Number($('graphMonth').value)||currentPeriod().month;
+ if(!ms.includes(pm)) ms.push(pm);
+ ms=[...new Set(ms)].sort((a,b)=>a-b);
+ $('graphMonth').innerHTML=ms.map(m=>`<option value="${m}" ${m===pm?'selected':''}>${m}月</option>`).join('');
+ $('graphMonth').value=String(pm);
 }
 function renderChart(){
  const h=combinedHistory();
+ if(!h.length){
+   $('chartBox').innerHTML='<div style="padding:46px 12px;text-align:center;color:#8a91a0">月次データを保存すると、ここに資産推移が表示されます。</div>';
+   $('chartCaption').textContent='保存データなし';
+   return;
+ }
  if(chartMode==='year'){
   const map={};h.forEach(x=>map[x.year]=x);const data=Object.keys(map).sort().map(k=>map[k]);
   $('chartBox').innerHTML=svgDynamic(data,true);$('chartCaption').textContent='全期間（各年の最終記録）';$('monthControls').style.display='none';return;
  }
  $('monthControls').style.display='block';
  const y=Number($('graphYear').value),m=Number($('graphMonth').value);
- let idx=h.findIndex(x=>x.year===y&&x.m===m);if(idx<0)idx=h.length-1;
+ let idx=h.findIndex(x=>x.year===y&&x.m===m);
+ if(idx<0){
+   idx=h.findLastIndex(x=>x.month<=`${y}-${String(m).padStart(2,'0')}`);
+   if(idx<0) idx=0;
+ }
  const data=h.slice(Math.max(0,idx-11),idx+1);
- $('chartBox').innerHTML=svgDynamic(data,false);$('chartCaption').textContent=data[0].label+'〜'+data.at(-1).label;
+ $('chartBox').innerHTML=svgDynamic(data,false);
+ $('chartCaption').textContent=data.length?data[0].label+'〜'+data.at(-1).label:'データなし';
 }
 
 function renderTransactions(){
@@ -1065,26 +1113,30 @@ $('graphYear').onchange=()=>{fillGraphMonths();renderChart()};$('graphMonth').on
 ['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>$(id).addEventListener('input',updateInputTotals));
 
 
-$('homeYear').onchange=()=>{
- const y=Number($('homeYear').value);
- const ps=availablePeriods().filter(x=>x.year===y);
- $('homeMonth').innerHTML=ps.map(x=>`<option value="${x.month}">${x.month}月</option>`).join('');
- $('homeMonth').value=ps.at(-1).month;
- renderHome();
-};
-$('homeMonth').onchange=renderHome;
-$('investYear').onchange=()=>{
- const y=Number($('investYear').value);
- const ps=availablePeriods().filter(x=>x.year===y);
- $('investMonth').innerHTML=ps.map(x=>`<option value="${x.month}">${x.month}月</option>`).join('');
- $('investMonth').value=ps.at(-1).month;
- renderInvest();
-};
-$('investMonth').onchange=renderInvest;
-
-resetRows();
-fillPeriodPair('homeYear','homeMonth',availablePeriods().at(-1).key);
-fillPeriodPair('investYear','investMonth',availablePeriods().at(-1).key);
+function setSharedPeriod(key){
+ const p=parsePeriodKey(key);
+ fillPeriodPair('homeYear','homeMonth',key);
+ fillPeriodPair('investYear','investMonth',key);
+ fillGraphOptions(key);
+ try{localStorage.setItem('assetManagerSelectedPeriod',key)}catch(e){}
+ renderHome(); renderInvest(); renderChart();
+}
+function periodFrom(prefix){ return selectedKey(prefix+'Year',prefix+'Month'); }
+function bindPeriod(prefix){
+ $(prefix+'Year').onchange=()=>{
+   const y=Number($(prefix+'Year').value);
+   let ms=availablePeriods().filter(x=>x.year===y).map(x=>x.month);
+   const remembered=Number($(prefix+'Month').value)||latestInputPeriod().month;
+   if(!ms.length) ms=[remembered];
+   $(prefix+'Month').innerHTML=[...new Set(ms)].sort((a,b)=>a-b).map(m=>`<option value="${m}">${m}月</option>`).join('');
+   $(prefix+'Month').value=String(ms.includes(remembered)?remembered:ms.at(-1));
+   setSharedPeriod(periodFrom(prefix));
+ };
+ $(prefix+'Month').onchange=()=>setSharedPeriod(periodFrom(prefix));
+}
+bindPeriod('home'); bindPeriod('invest');
+const initialKey=latestInputPeriod().key;
+setSharedPeriod(initialKey);
 updateInputTotals();
 renderAll();
 </script>
@@ -1093,121 +1145,5 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 }
 </script>
-<script>
-(function(){
-  const PERIOD_KEY='assetManagerSelectedPeriodV2';
-
-  function ymNow(){
-    const d=new Date();
-    return {year:d.getFullYear(), month:d.getMonth()+1};
-  }
-  function parseYM(s){
-    const m=String(s||'').match(/^(\d{4})-(\d{1,2})$/);
-    return m?{year:+m[1],month:+m[2]}:null;
-  }
-  function latestSavedMonth(){
-    let latest=null;
-    try{
-      for(let i=0;i<localStorage.length;i++){
-        const k=localStorage.key(i);
-        const raw=localStorage.getItem(k);
-        if(!raw) continue;
-        let obj;
-        try{ obj=JSON.parse(raw); }catch(e){ continue; }
-
-        const visit=(v)=>{
-          if(!v) return;
-          if(Array.isArray(v)){ v.forEach(visit); return; }
-          if(typeof v!=='object') return;
-          if(typeof v.month==='string'){
-            const p=parseYM(v.month);
-            if(p && (!latest || v.month>latest)) latest=v.month;
-          }
-          if(v.months && typeof v.months==='object'){
-            Object.keys(v.months).forEach(key=>{
-              const p=parseYM(key);
-              if(p && (!latest || key>latest)) latest=key;
-            });
-          }
-        };
-        visit(obj);
-      }
-    }catch(e){}
-    return latest ? parseYM(latest) : null;
-  }
-  function getDefaultPeriod(){
-    const saved=latestSavedMonth();
-    if(saved) return saved;
-    try{
-      const remembered=parseYM(localStorage.getItem(PERIOD_KEY));
-      if(remembered) return remembered;
-    }catch(e){}
-    return ymNow();
-  }
-  function ensureOption(sel,val,label){
-    if(!sel) return;
-    val=String(val);
-    if(!Array.from(sel.options).some(o=>o.value===val)){
-      const o=document.createElement('option');
-      o.value=val; o.textContent=label||val;
-      sel.appendChild(o);
-    }
-  }
-  function setPair(yearSel,monthSel,p){
-    if(!yearSel||!monthSel) return;
-    ensureOption(yearSel,p.year,p.year+'年');
-    ensureOption(monthSel,p.month,p.month+'月');
-    yearSel.value=String(p.year);
-    monthSel.value=String(p.month);
-  }
-  function syncPeriod(p,source){
-    ['home','invest'].forEach(prefix=>{
-      const y=document.getElementById(prefix+'Year');
-      const m=document.getElementById(prefix+'Month');
-      setPair(y,m,p);
-    });
-    try{ localStorage.setItem(PERIOD_KEY,`${p.year}-${String(p.month).padStart(2,'0')}`); }catch(e){}
-    // Ask existing app renderers to refresh without depending on them for selection.
-    ['homeYear','homeMonth','investYear','investMonth'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el && el!==source) el.dispatchEvent(new Event('change',{bubbles:true}));
-    });
-  }
-  function bind(){
-    const p=getDefaultPeriod();
-    syncPeriod(p,null);
-
-    ['home','invest'].forEach(prefix=>{
-      const y=document.getElementById(prefix+'Year');
-      const m=document.getElementById(prefix+'Month');
-      [y,m].forEach(el=>{
-        if(!el || el.dataset.periodV2Bound) return;
-        el.dataset.periodV2Bound='1';
-        el.addEventListener('change',()=>{
-          const yy=+(document.getElementById(prefix+'Year')?.value||p.year);
-          const mm=+(document.getElementById(prefix+'Month')?.value||p.month);
-          syncPeriod({year:yy,month:mm},el);
-        });
-      });
-    });
-
-    // When a monthly record is saved, the app's latest stored month becomes the next default.
-    document.addEventListener('click',e=>{
-      const t=e.target.closest('button');
-      if(!t) return;
-      const label=(t.textContent||'').trim();
-      if(/保存|登録/.test(label)){
-        setTimeout(()=>{
-          const lp=latestSavedMonth();
-          if(lp) syncPeriod(lp,null);
-        },100);
-      }
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
-  else bind();
-})();
-</script>
-
 </body>
 </html>
