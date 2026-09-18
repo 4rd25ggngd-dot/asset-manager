@@ -90,8 +90,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <section id="home" class="page">
 <div class="hero">
 <div class="lab">総資産</div><div class="total" id="homeTotal">¥63,129,406</div>
-<div class="hero-pills"><span class="hero-pill" id="homeMom">前月比 +¥3,044,508</span><span class="hero-pill" id="homeYield">2026利回り 履歴入力後更新</span><div id="homeAnnualGain" style="margin-top:7px;font-size:14px;font-weight:800;color:#16844a">投資による増加額 —</div>
-<div id="homeAssetIncrease" class="muted" style="margin-top:3px;font-size:12px">総資産の年初比 —</div></div>
+<div class="hero-pills"><span class="hero-pill" id="homeMom">前月比 +¥3,044,508</span><span class="hero-pill" id="homeYield">前年比 —</span></div>
 </div>
 <div class="card">
 <h2>表示する年月</h2>
@@ -149,6 +148,14 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <div class="note" id="allocationDetailNote">2026年8月は既存データの内訳を表示しています。</div>
 </div>
 
+<div class="card">
+  <div class="section-title">年間利回り</div>
+  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+    <div id="investAnnualYield" style="font-size:24px;font-weight:900;color:#3442b8">—</div>
+    <div id="investAnnualGain" style="font-size:16px;font-weight:800;color:#16844a">—</div>
+  </div>
+  <div id="investAnnualNote" class="muted" style="margin-top:6px;font-size:12px">入出金を考慮した投資成績</div>
+</div>
 <div class="card">
 <h2>現在の投資内訳</h2>
 <div class="data-row"><span>国内株</span><b id="curJP">¥1,501,010</b></div>
@@ -504,19 +511,11 @@ function renderHome(){
  $('homeInvest').textContent=yen(cur.invest);
  $('homeMom').textContent='前月比 '+signedYen(cur.total-pr.total);
  const yr=annualYield(cur.year);
- $('homeYield').textContent=yr?`${cur.year}利回り ${yr.rate>=0?'+':''}${yr.rate.toFixed(2)}%`:`${cur.year}利回り 履歴入力後更新`;
- const yearRows=combinedHistory().filter(x=>x.year===cur.year && x.month<=cur.month);
- if(yearRows.length){
-   const first=yearRows[0];
-   const assetInc=cur.total-first.total;
-   const txs=(state.transactions||[]).filter(t=>t.month>=first.month && t.month<=cur.month);
-   const netFlow=txs.reduce((s,t)=>s+(Number(t.buy)||0)-(Number(t.sell)||0),0);
-   const investGain=(cur.invest-first.invest)-netFlow;
-   const fmtGain=v=>(v>=0?'+':'−')+'¥'+Math.abs(Math.round(v)).toLocaleString('ja-JP');
-   if($('homeAnnualGain')) $('homeAnnualGain').textContent='投資による増加額 '+fmtGain(investGain);
-   if($('homeAssetIncrease')) $('homeAssetIncrease').textContent='総資産の年初比 '+fmtGain(assetInc);
- }
-
+ const prevYear=combinedHistory().find(x=>x.year===cur.year-1 && x.m===cur.m);
+ if(prevYear){
+   const yoy=cur.total-prevYear.total, yoyPct=prevYear.total?yoy/prevYear.total*100:0;
+   $('homeYield').textContent=`前年比 ${yoy>=0?'+':''}${yoyPct.toFixed(1)}%（${yoy>=0?'+':'−'}¥${Math.abs(Math.round(yoy)).toLocaleString('ja-JP')}）`;
+ }else $('homeYield').textContent='前年比 —';
  $('homePeriodNote').textContent=`${cur.label}時点：総資産 ${yen(cur.total)} / 銀行・預金等 ${yen(cur.bank)} / 投資資産 ${yen(cur.invest)}`;
  const tx=allTransactions().filter(x=>x.month===cur.month);
  const buy=tx.filter(x=>x.type==='buy').reduce((a,x)=>a+num(x.amount),0);
@@ -540,6 +539,19 @@ function renderInvest(){
  const key=selectedKey('investYear','investMonth');
  const rec=periodRecord(key)||periodRecord(fallback);
  const b=breakdownForMonth(rec.month);
+ const yr=rec.year;
+ const yrRows=combinedHistory().filter(x=>x.year===yr && x.month<=rec.month);
+ if(yrRows.length){
+   const first=yrRows[0];
+   const txs=(state.transactions||[]).filter(t=>t.month>=first.month && t.month<=rec.month);
+   const netFlow=txs.reduce((s,t)=>s+(Number(t.buy)||0)-(Number(t.sell)||0),0);
+   const gain=(rec.invest-first.invest)-netFlow;
+   const denom=first.invest+netFlow/2;
+   const rate=denom?gain/denom*100:0;
+   if($('investAnnualYield')) $('investAnnualYield').textContent=`${yr}年 ${rate>=0?'+':''}${rate.toFixed(2)}%`;
+   if($('investAnnualGain')) $('investAnnualGain').textContent=`${gain>=0?'+':'−'}¥${Math.abs(Math.round(gain)).toLocaleString('ja-JP')}`;
+ }
+
  $('investPeriodNote').textContent=`${rec.label}時点の資産配分・投資内訳を表示中`;
 
  if(b.detailed){
@@ -734,6 +746,6 @@ updateInputTotals();
 renderAll();
 </script>
 <script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=6').catch(()=>{}));}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=7').catch(()=>{}));}
 </script></body>
 </html>
