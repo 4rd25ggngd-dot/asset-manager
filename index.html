@@ -149,28 +149,20 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 </div>
 
 <div class="card">
-  <div class="section-title">年間利回り</div>
-  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-    <div id="investAnnualYield" style="font-size:24px;font-weight:900;color:#3442b8">—</div>
-    <div id="investAnnualGain" style="font-size:16px;font-weight:800;color:#16844a">—</div>
-  </div>
-  <div id="investAnnualNote" class="muted" style="margin-top:6px;font-size:12px">入出金を考慮した投資成績</div>
-</div>
-<div class="card">
 <h2>現在の投資内訳</h2>
 <div class="data-row"><span>国内株</span><b id="curJP">¥1,501,010</b></div>
+<div class="card">
+<h2>年間利回り</h2>
+<div class="sub" style="margin-bottom:8px">CF調整後の利回りと、同じ計算に基づく投資増加額です。今年は暫定値です。</div>
+<div id="annualPerformanceList"></div>
+</div>
+
 <div class="data-row"><span>米国株</span><b id="curUS">¥5,610,168</b></div>
 <div class="data-row"><span>投資信託</span><b id="curFund">¥32,257,607</b></div>
 <div class="data-row"><span>金・コモディティ</span><b id="curComm">¥17,792,599</b></div>
 <div class="data-row"><span>仮想通貨</span><b id="curCrypto">¥0</b></div>
 </div>
 
-<div class="card">
-<h2>年間利回り</h2>
-<div class="kpi"><div class="label">2026年・CF調整後 投資利回り</div><div class="value" id="yield2026">履歴入力後</div><div class="sub" id="yieldNote">画像から取り込んだ2026年1〜8月の買付・売却履歴を反映して自動計算します。</div></div>
-<h3>過去年利</h3>
-<div class="data-row"><span>2020年</span><b class="good">2.72%</b></div><div class="data-row"><span>2021年</span><b class="good">29.74%</b></div><div class="data-row"><span>2022年</span><b class="bad">-3.70%</b></div><div class="data-row"><span>2023年</span><b class="good">28.06%</b></div><div class="data-row"><span>2024年</span><b class="good">35.50%</b></div><div class="data-row"><span>2025年</span><b class="good">36.21%</b></div>
-</div>
 </section>
 
 <section id="input" class="page">
@@ -532,26 +524,48 @@ function currentBreakdown(){
  if(!$('investYear').options.length) fillPeriodPair('investYear','investMonth',fallback);
  return breakdownForMonth(selectedKey('investYear','investMonth'))||breakdownForMonth(fallback);
 }
+
+
+function renderAnnualPerformance(){
+ const box=$('annualPerformanceList'); if(!box)return;
+ const hist=combinedHistory();
+ if(!hist.length){box.innerHTML='<div class="sub">データがありません</div>';return;}
+ const latestYear=hist.at(-1).year;
+ const years=[...new Set(hist.map(x=>x.year))].sort((a,b)=>b-a);
+ box.innerHTML=years.map(y=>{
+   const z=annualYield(y);
+   let rate=null,gain=null;
+   if(z){
+     rate=Number(z.rate);
+     // Same CF-adjusted logic used by annualYield:
+     // gain = ending investment - beginning investment - purchases + sales.
+     gain=Number(z.end)-Number(z.start)-Number(z.buys)+Number(z.sells);
+   } else if(BASE_YIELDS[y]!=null) {
+     rate=Number(BASE_YIELDS[y]);
+   }
+   const provisional=y===latestYear?' <span class="sub">（暫定）</span>':'';
+   const rateText=Number.isFinite(rate)?`${rate>=0?'+':''}${rate.toFixed(2)}%`:'—';
+   const gainText=Number.isFinite(gain)?`${gain>=0?'+':'−'}¥${Math.abs(Math.round(gain)).toLocaleString('ja-JP')}`:'—';
+   const cls=Number.isFinite(rate)?(rate>=0?'good':'bad'):'';
+   const gcls=Number.isFinite(gain)?(gain>=0?'good':'bad'):'';
+   return `<div class="data-row" style="align-items:center">
+     <span><b>${y}年</b>${provisional}</span>
+     <span style="display:flex;gap:12px;align-items:baseline;justify-content:flex-end;flex-wrap:wrap">
+       <b class="${cls}" style="font-size:18px">${rateText}</b>
+       <b class="${gcls}" style="font-size:15px">${gainText}</b>
+     </span>
+   </div>`;
+ }).join('');
+}
 function renderInvest(){
+ renderAnnualPerformance();
+ renderAnnualYieldList();
  const periods=availablePeriods(); if(!periods.length)return;
  const fallback=periods.at(-1).key;
  if(!$('investYear').options.length) fillPeriodPair('investYear','investMonth',fallback);
  const key=selectedKey('investYear','investMonth');
  const rec=periodRecord(key)||periodRecord(fallback);
  const b=breakdownForMonth(rec.month);
- const yr=rec.year;
- const yrRows=combinedHistory().filter(x=>x.year===yr && x.month<=rec.month);
- if(yrRows.length){
-   const first=yrRows[0];
-   const txs=(state.transactions||[]).filter(t=>t.month>=first.month && t.month<=rec.month);
-   const netFlow=txs.reduce((s,t)=>s+(Number(t.buy)||0)-(Number(t.sell)||0),0);
-   const gain=(rec.invest-first.invest)-netFlow;
-   const denom=first.invest+netFlow/2;
-   const rate=denom?gain/denom*100:0;
-   if($('investAnnualYield')) $('investAnnualYield').textContent=`${yr}年 ${rate>=0?'+':''}${rate.toFixed(2)}%`;
-   if($('investAnnualGain')) $('investAnnualGain').textContent=`${gain>=0?'+':'−'}¥${Math.abs(Math.round(gain)).toLocaleString('ja-JP')}`;
- }
-
  $('investPeriodNote').textContent=`${rec.label}時点の資産配分・投資内訳を表示中`;
 
  if(b.detailed){
@@ -585,12 +599,12 @@ function renderInvest(){
  }
  const y=annualYield(rec.year);
  if(y){
-   $('yield2026').textContent=(y.rate>=0?'+':'')+y.rate.toFixed(2)+'%';
+   $('yield2026') && ($('yield2026') && ($('yield2026').textContent=(y.rate>=0?'+':'')+y.rate.toFixed(2)+'%'));
    $('yield2026').className='value '+(y.rate>=0?'good':'bad');
-   $('yieldNote').textContent=`${rec.year}年：年初投資資産 ${yen(y.start)} / 期末・現在 ${yen(y.end)} / 買付 ${yen(y.buys)} / 売却 ${yen(y.sells)}`;
+   $('yieldNote') && ($('yieldNote').textContent=`${rec.year}年：年初投資資産 ${yen(y.start)} / 期末・現在 ${yen(y.end)} / 買付 ${yen(y.buys)} / 売却 ${yen(y.sells)}`);
  } else {
-   $('yield2026').textContent='履歴入力後';
-   $('yieldNote').textContent='画像から取り込んだ2026年1〜8月の買付・売却履歴を反映して自動計算します。';
+   $('yield2026') && ($('yield2026') && ($('yield2026').textContent='履歴入力後'));
+   $('yieldNote') && ($('yieldNote').textContent='画像から取り込んだ2026年1〜8月の買付・売却履歴を反映して自動計算します。');
  }
 }
 
@@ -746,6 +760,6 @@ updateInputTotals();
 renderAll();
 </script>
 <script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=7').catch(()=>{}));}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=9').catch(()=>{}));}
 </script></body>
 </html>

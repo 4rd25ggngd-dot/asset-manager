@@ -1,4 +1,4 @@
-const C='asset-manager-stable-v7';
+const C='asset-manager-stable-v9';
 const STATIC=['./manifest.webmanifest','./icon-180.png','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(STATIC)));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(a=>Promise.all(a.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim();});
