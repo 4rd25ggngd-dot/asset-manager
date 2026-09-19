@@ -61,7 +61,8 @@ select,input{width:100%;padding:11px 12px;border:1px solid #dfe3e9;border-radius
 .pie{width:150px;height:150px;border-radius:50%;background:conic-gradient(#5969d9 0 62.362%,#d49c3d 62.362% 90.546%,#3d9c75 90.546% 100%);position:relative}
 .pie:after{content:"";position:absolute;inset:33px;background:#fff;border-radius:50%}
 .legend-row{display:grid;grid-template-columns:10px 1fr auto;gap:7px;align-items:center;margin:9px 0;font-size:12px}
-.dot{width:10px;height:10px;border-radius:50%} .stock{background:#5969d9} .comm{background:#d49c3d} .cash{background:#3d9c75}
+.dot{width:10px;height:10px;border-radius:50%} .stock{background:#5969d9} .bond{background:#7b70c9} .comm{background:#d49c3d} .crypto{background:#b86b9d} .cash{background:#3d9c75}
+.import-box{border:1px solid #e5e8ef;border-radius:16px;padding:14px;margin-top:12px;background:#fafbff}.import-box h3{margin-top:0}.import-status{font-size:12px;color:#6f7685;margin-top:8px}.preview-list{margin-top:10px;border-top:1px solid #e8ebf1}.preview-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #eef0f4;font-size:13px}.account-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}.file-btn{display:block;text-align:center;padding:11px 12px;border-radius:12px;background:#eef0ff;color:#3442b8;font-weight:700;cursor:pointer}.hidden-file{display:none}
 .ratio{font-size:23px;font-weight:850;letter-spacing:-.03em}
 .kpi{background:#f8f9fb;border-radius:14px;padding:12px;margin-top:8px}
 .kpi .label{font-size:10px;color:var(--muted)} .kpi .value{font-size:23px;font-weight:850;margin-top:3px}
@@ -139,11 +140,13 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <div class="card">
 <h2>資産配分</h2>
 <div class="pie-wrap"><div class="pie" id="allocationPie"></div><div>
-<div class="ratio" id="allocationRatio">62 : 28 : 9</div>
-<div class="sub">株式 : コモディティ : 現金</div>
-<div class="legend-row"><span class="dot stock"></span><span>株式</span><b id="stockPct">62.4%</b></div>
-<div class="legend-row"><span class="dot comm"></span><span>コモディティ<br><span class="sub">仮想通貨含む</span></span><b id="commPct">28.2%</b></div>
-<div class="legend-row"><span class="dot cash"></span><span>現金</span><b id="cashPct">9.5%</b></div>
+<div class="ratio" id="allocationRatio">—</div>
+<div class="sub">実質的な資産クラスで5分類</div>
+<div class="legend-row"><span class="dot stock"></span><span>株式</span><b id="stockPct">—</b></div>
+<div class="legend-row"><span class="dot bond"></span><span>債券</span><b id="bondPct">—</b></div>
+<div class="legend-row"><span class="dot comm"></span><span>コモディティ</span><b id="commPct">—</b></div>
+<div class="legend-row"><span class="dot crypto"></span><span>仮想通貨</span><b id="cryptoPct">—</b></div>
+<div class="legend-row"><span class="dot cash"></span><span>現金</span><b id="cashPct">—</b></div>
 </div></div>
 <div class="note" id="allocationDetailNote">2026年8月は既存データの内訳を表示しています。</div>
 </div>
@@ -152,7 +155,8 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <h2>現在の投資内訳</h2>
 <div class="data-row"><span>国内株</span><b id="curJP">¥1,501,010</b></div>
 <div class="data-row"><span>米国株</span><b id="curUS">¥5,610,168</b></div>
-<div class="data-row"><span>投資信託</span><b id="curFund">¥32,257,607</b></div>
+<div class="data-row"><span>投資信託（株式系）</span><b id="curFund">¥32,257,607</b></div>
+<div class="data-row"><span>債券・債券ETF/ファンド</span><b id="curBond">¥0</b></div>
 <div class="data-row"><span>金・コモディティ</span><b id="curComm">¥17,792,599</b></div>
 <div class="data-row"><span>仮想通貨</span><b id="curCrypto">¥0</b></div>
 </div>
@@ -170,6 +174,14 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <div class="field"><label class="field-label">対象月</label><input type="month" id="recordMonth" value="2026-09"></div>
 <div class="action-row"><button class="secondary-btn" type="button" id="loadMonthBtn">この月を読込</button><button class="primary-btn" type="button" id="saveMonthBtn">この月を保存</button></div>
 <div class="note">保存後、同じ月を選んで「この月を読込」を押すと、口座内訳も含めて再表示できます。</div>
+<div class="import-box">
+<h3>CSVでかんたん入力</h3>
+<div class="sub">証券口座ごとに「評価額CSV」と「売買履歴CSV」を読み込めます。手入力はこの下に残しています。</div>
+<div class="account-row" style="margin-top:10px"><label>取込先口座<select id="csvAccount"></select></label><button class="secondary-btn" type="button" id="addAccountBtn">＋口座</button></div>
+<div class="action-row" style="margin-top:10px"><label class="file-btn">評価額CSV<input class="hidden-file" type="file" id="holdingsCsv" accept=".csv,text/csv"></label><label class="file-btn">売買履歴CSV<input class="hidden-file" type="file" id="tradesCsv" accept=".csv,text/csv"></label></div>
+<div class="import-status" id="csvStatus">CSVを選ぶと内容を解析し、確認後に反映します。</div>
+<div id="csvPreview"></div>
+</div>
 
 <h3>銀行・預金等</h3>
 <div class="columns-head bank"><span>口座名</span><span>月末残高</span><span></span></div>
@@ -212,6 +224,14 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <button class="add-btn" type="button" id="addFundBtn">＋ 口座を追加</button>
 <div class="total-preview"><span>投資信託 評価額</span><b id="fundValTotal">¥0</b><span>今月買付</span><b id="fundBuyTotal">¥0</b><span>今月売却</span><b id="fundSellTotal">¥0</b></div>
 
+<h3>債券</h3>
+<div class="calc3">
+<label>現在評価額<input type="number" id="bondVal" placeholder="国債・社債・債券ETF/ファンド"></label>
+<label>今月買付<input type="number" id="bondBuy" placeholder="買付"></label>
+<label>今月売却<input type="number" id="bondSell" placeholder="売却"></label>
+</div>
+<div class="info">国債・社債に加え、債券ETF・債券ファンドも「債券」として集計します。</div>
+
 <h3>金・コモディティ（直接保有）</h3>
 <div class="calc3">
 <label>現在評価額<input type="number" id="directCommVal" placeholder="評価額"></label>
@@ -249,7 +269,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <div class="sub">過去分を手入力する場合はこちら。今後の月次入力で保存した買付・売却は自動で履歴に含まれます。</div>
 <div class="calc2" style="margin-top:10px">
 <label>年月<input type="month" id="txMonth" value="2026-01"></label>
-<label>カテゴリ<select id="txCategory"><option>国内株</option><option>米国株</option><option>投資信託</option><option>コモディティ</option><option>仮想通貨</option></select></label>
+<label>カテゴリ<select id="txCategory"><option>国内株</option><option>米国株</option><option>投資信託</option><option>債券</option><option>コモディティ</option><option>仮想通貨</option></select></label>
 <label>区分<select id="txType"><option value="buy">買付</option><option value="sell">売却</option></select></label>
 <label>金額<input type="number" id="txAmount" placeholder="金額"></label>
 </div>
@@ -300,11 +320,11 @@ function simpleCalc(v){
   try { const r=Function('"use strict";return ('+s+')')(); return Number.isFinite(r)?r:NaN; } catch(e) { return NaN; }
 }
 
-function defaultState(){ return {months:{}, history:[], breakdowns:{}, transactions:[]}; }
+function defaultState(){ return {months:{}, history:[], breakdowns:{}, transactions:[], accounts:[], csvHoldings:{}}; }
 function loadState(){
   try {
    const s=JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultState();
-   s.months=s.months||{}; s.history=s.history||[]; s.breakdowns=s.breakdowns||{}; s.transactions=s.transactions||[];
+   s.months=s.months||{}; s.history=s.history||[]; s.breakdowns=s.breakdowns||{}; s.transactions=s.transactions||[]; s.accounts=s.accounts||[]; s.csvHoldings=s.csvHoldings||{};
    return s;
   }
   catch(e) { return defaultState(); }
@@ -354,6 +374,7 @@ function readForm(){
   jpCommVal:Number.isFinite(jpCommVal)?jpCommVal:0, jpCommBuy:Number.isFinite(jpCommBuy)?jpCommBuy:0, jpCommSell:Number.isFinite(jpCommSell)?jpCommSell:0,
   usVal:num($('usVal').value), usBuy:num($('usBuy').value), usSell:num($('usSell').value),
   usCommVal:Number.isFinite(usCommVal)?usCommVal:0, usCommBuy:Number.isFinite(usCommBuy)?usCommBuy:0, usCommSell:Number.isFinite(usCommSell)?usCommSell:0,
+  bondVal:num($('bondVal').value), bondBuy:num($('bondBuy').value), bondSell:num($('bondSell').value),
   directCommVal:num($('directCommVal').value), directCommBuy:num($('directCommBuy').value), directCommSell:num($('directCommSell').value),
   cryptoVal:num($('cryptoVal').value), cryptoBuy:num($('cryptoBuy').value), cryptoSell:num($('cryptoSell').value)
  };
@@ -366,14 +387,16 @@ function totalsFrom(m){
  const jpStock=Math.max(0,m.jpVal-m.jpCommVal);
  const usStock=Math.max(0,m.usVal-m.usCommVal);
  const commodity=m.directCommVal+m.jpCommVal+m.usCommVal;
- const invest=jpStock+usStock+fundVal+commodity+m.cryptoVal;
+ const bond=num(m.bondVal);
+ const invest=jpStock+usStock+fundVal+bond+commodity+m.cryptoVal;
  const buyStock=m.jpBuy+m.usBuy+fundBuy;
+ const buyBond=num(m.bondBuy), sellBond=num(m.bondSell);
  const sellStock=m.jpSell+m.usSell+fundSell;
  const buyComm=m.directCommBuy+m.jpCommBuy+m.usCommBuy;
  const sellComm=m.directCommSell+m.jpCommSell+m.usCommSell;
  const buyCrypto=m.cryptoBuy, sellCrypto=m.cryptoSell;
- const buy=buyStock+buyComm+buyCrypto, sell=sellStock+sellComm+sellCrypto;
- return {bank,fundVal,fundBuy,fundSell,jpStock,usStock,commodity,invest,total:bank+invest,buyStock,sellStock,buyComm,sellComm,buyCrypto,sellCrypto,buy,sell};
+ const buy=buyStock+buyBond+buyComm+buyCrypto, sell=sellStock+sellBond+sellComm+sellCrypto;
+ return {bank,fundVal,fundBuy,fundSell,jpStock,usStock,bond,commodity,invest,total:bank+invest,buyStock,sellStock,buyBond,sellBond,buyComm,sellComm,buyCrypto,sellCrypto,buy,sell};
 }
 function updateInputTotals(){
  const t=totalsFrom(readForm());
@@ -392,10 +415,10 @@ function setVal(id,v){ $(id).value=(v??'')===0?'':(v??''); }
 function loadMonth(month){
  const m=state.months[month];
  $('recordMonth').value=month;
- if(!m){ resetRows(); ['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>$(id).value=''); updateInputTotals(); return toast('保存データがない月です'); }
+ if(!m){ resetRows(); ['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','bondVal','bondBuy','bondSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>$(id).value=''); updateInputTotals(); return toast('保存データがない月です'); }
  $('bankEntries').innerHTML=''; (m.banks?.length?m.banks:[{}]).forEach(x=>addBankRow(x.name,x.value));
  $('fundEntries').innerHTML=''; (m.funds?.length?m.funds:[{}]).forEach(x=>addFundRow(x.name,x.value,x.buy,x.sell));
- ['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>setVal(id,m[id]));
+ ['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','bondVal','bondBuy','bondSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>setVal(id,m[id]));
  updateInputTotals(); toast(month.replace('-','年')+'月を読み込みました');
 }
 
@@ -405,6 +428,7 @@ function monthlyTransactions(month,m){
  push('国内株','buy',m.jpBuy,'月次入力');push('国内株','sell',m.jpSell,'月次入力');
  push('米国株','buy',m.usBuy,'月次入力');push('米国株','sell',m.usSell,'月次入力');
  push('投資信託','buy',t.fundBuy,'月次入力');push('投資信託','sell',t.fundSell,'月次入力');
+ push('債券','buy',m.bondBuy,'月次入力');push('債券','sell',m.bondSell,'月次入力');
  push('コモディティ','buy',m.jpCommBuy+m.usCommBuy+m.directCommBuy,'月次入力');push('コモディティ','sell',m.jpCommSell+m.usCommSell+m.directCommSell,'月次入力');
  push('仮想通貨','buy',m.cryptoBuy,'月次入力');push('仮想通貨','sell',m.cryptoSell,'月次入力');
  return arr;
@@ -516,11 +540,11 @@ function breakdownForMonth(key){
  const saved=state.months[key];
  if(saved){
    const t=totalsFrom(saved);
-   return {jp:t.jpStock,us:t.usStock,fund:t.fundVal,comm:t.commodity,crypto:saved.cryptoVal,cash:t.bank,detailed:true,source:'保存済み入力'};
+   return {jp:t.jpStock,us:t.usStock,fund:t.fundVal,bond:t.bond,comm:t.commodity,crypto:saved.cryptoVal,cash:t.bank,detailed:true,source:'保存済み入力'};
  }
  const ib=(state.breakdowns||{})[key];
- if(ib) return {...ib,cash:rec.bank,detailed:true,source:'取込済み内訳'};
- return {jp:0,us:0,fund:0,comm:0,crypto:0,cash:rec.bank,detailed:false,source:'総額履歴のみ'};
+ if(ib) return {bond:0,...ib,cash:rec.bank,detailed:true,source:'取込済み内訳'};
+ return {jp:0,us:0,fund:0,bond:0,comm:0,crypto:0,cash:rec.bank,detailed:false,source:'総額履歴のみ'};
 }
 
 function renderHome(){
@@ -567,30 +591,32 @@ function renderInvest(){
    $('curJP').textContent=yen(b.jp);
    $('curUS').textContent=yen(b.us);
    $('curFund').textContent=yen(b.fund);
+   $('curBond').textContent=yen(b.bond||0);
    $('curComm').textContent=yen(b.comm);
    $('curCrypto').textContent=yen(b.crypto);
-   const stock=b.jp+b.us+b.fund,comm=b.comm+b.crypto,total=stock+comm+b.cash;
-   const sp=total?stock/total*100:0,cp=total?comm/total*100:0,kp=total?b.cash/total*100:0;
-   $('stockPct').textContent=sp.toFixed(1)+'%';
-   $('commPct').textContent=cp.toFixed(1)+'%';
-   $('cashPct').textContent=kp.toFixed(1)+'%';
-   $('allocationRatio').textContent=`${Math.round(sp)} : ${Math.round(cp)} : ${Math.round(kp)}`;
-   $('allocationPie').style.background=`conic-gradient(#5969d9 0 ${sp}%,#d49c3d ${sp}% ${sp+cp}%,#3d9c75 ${sp+cp}% 100%)`;
-   $('allocationDetailNote').textContent=`${rec.label}：${b.source}を使った3分類の資産配分です。`;
+   const stock=b.jp+b.us+b.fund,bond=b.bond||0,comm=b.comm,crypto=b.crypto,total=stock+bond+comm+crypto+b.cash;
+   const sp=total?stock/total*100:0,bp=total?bond/total*100:0,cp=total?comm/total*100:0,xp=total?crypto/total*100:0,kp=total?b.cash/total*100:0;
+   $('stockPct').textContent=sp.toFixed(1)+'%'; $('bondPct').textContent=bp.toFixed(1)+'%';
+   $('commPct').textContent=cp.toFixed(1)+'%'; $('cryptoPct').textContent=xp.toFixed(1)+'%'; $('cashPct').textContent=kp.toFixed(1)+'%';
+   $('allocationRatio').textContent=`${Math.round(sp)} : ${Math.round(bp)} : ${Math.round(cp)} : ${Math.round(xp)} : ${Math.round(kp)}`;
+   let a=sp,b1=a+bp,c=b1+cp,d=c+xp;
+   $('allocationPie').style.background=`conic-gradient(#5969d9 0 ${a}%,#7b70c9 ${a}% ${b1}%,#d49c3d ${b1}% ${c}%,#b86b9d ${c}% ${d}%,#3d9c75 ${d}% 100%)`;
+   $('allocationDetailNote').textContent=`${rec.label}：株式・債券・コモディティ・仮想通貨・現金の5分類です。`;
  } else {
    $('curJP').textContent='—';
    $('curUS').textContent='—';
    $('curFund').textContent='—';
+   $('curBond').textContent='—';
    $('curComm').textContent='—';
    $('curCrypto').textContent='—';
    const investPct=rec.total?rec.invest/rec.total*100:0;
    const cashPct=rec.total?rec.bank/rec.total*100:0;
    $('stockPct').textContent=investPct.toFixed(1)+'%';
-   $('commPct').textContent='—';
+   $('bondPct').textContent='—'; $('commPct').textContent='—'; $('cryptoPct').textContent='—';
    $('cashPct').textContent=cashPct.toFixed(1)+'%';
-   $('allocationRatio').textContent=`${Math.round(investPct)} : — : ${Math.round(cashPct)}`;
+   $('allocationRatio').textContent=`${Math.round(investPct)} : — : — : — : ${Math.round(cashPct)}`;
    $('allocationPie').style.background=`conic-gradient(#5969d9 0 ${investPct}%,#3d9c75 ${investPct}% 100%)`;
-   $('allocationDetailNote').textContent=`${rec.label}は総投資額と現金額までは確認できますが、株式/コモディティ別の詳細内訳が未登録です。詳細データを追加すれば当時の3分類比率まで表示できます。`;
+   $('allocationDetailNote').textContent=`${rec.label}は総投資額と現金額までは確認できますが、5分類の詳細内訳が未登録です。詳細データを追加すれば当時の3分類比率まで表示できます。`;
  }
  renderAnnualPerformance();
 }
@@ -649,7 +675,7 @@ function renderChart(){
 
 function renderTransactions(){
  const arr=allTransactions().slice().reverse();
- $('txBody').innerHTML=arr.map((x,i)=>`<tr><td>${esc(x.month)}</td><td>${esc(x.category)}</td><td>${x.type==='buy'?'買付':'売却'}</td><td>${yen(x.amount)}</td><td>${esc(x.memo||'')}</td><td>${x.source==='月次入力'?'<span class="status">月次</span>':(x.source==='画像取込'?'<span class="status">画像取込</span>':`<button class="danger-btn" style="padding:5px 7px" onclick="deleteManualTx('${x.id}')">削除</button>`)}</td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#8a91a0">履歴なし</td></tr>';
+ $('txBody').innerHTML=arr.map((x,i)=>`<tr><td>${esc(x.month)}</td><td>${esc(x.category)}</td><td>${x.type==='buy'?'買付':'売却'}</td><td>${yen(x.amount)}</td><td>${esc(x.memo||'')}</td><td>${x.source==='月次入力'?'<span class="status">月次</span>':(x.source==='画像取込'?'<span class="status">画像取込</span>':(x.source==='CSV取込'?'<span class="status">CSV</span>':`<button class="danger-btn" style="padding:5px 7px" onclick="deleteManualTx('${x.id}')">削除</button>`))}</td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#8a91a0">履歴なし</td></tr>';
 }
 window.deleteManualTx=id=>{state.transactions=state.transactions.filter(x=>x.id!==id);saveState();renderAll();toast('履歴を削除しました')};
 function addManualTx(){
@@ -693,6 +719,7 @@ function importJson(file){
 function renderAll(){renderHome();renderInvest();renderTransactions();renderMonths();fillGraphOptions();renderChart();}
 
 $('addBankBtn').onclick=()=>addBankRow();
+$('addAccountBtn').onclick=addAccount; $('holdingsCsv').onchange=e=>{if(e.target.files[0])readCsvFile(e.target.files[0],'holdings')}; $('tradesCsv').onchange=e=>{if(e.target.files[0])readCsvFile(e.target.files[0],'trades')};
 $('addFundBtn').onclick=()=>addFundRow();
 $('saveMonthBtn').onclick=saveMonth;
 $('loadMonthBtn').onclick=()=>loadMonth($('recordMonth').value);
@@ -703,9 +730,80 @@ $('resetBtn').onclick=()=>{if(confirm('このアプリで保存した入力デ�
 $('monthMode').onclick=()=>{chartMode='month';$('monthMode').classList.add('active');$('yearMode').classList.remove('active');renderChart()};
 $('yearMode').onclick=()=>{chartMode='year';$('yearMode').classList.add('active');$('monthMode').classList.remove('active');renderChart()};
 $('graphYear').onchange=()=>{fillGraphMonths();renderChart()};$('graphMonth').onchange=renderChart;
-['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>$(id).addEventListener('input',updateInputTotals));
+['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','bondVal','bondBuy','bondSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>$(id).addEventListener('input',updateInputTotals));
 
 
+
+
+function ensureAccounts(){
+ if(!state.accounts.length) state.accounts=[{id:'acc_main',name:'楽天証券・本人',broker:'楽天証券'}];
+ const el=$('csvAccount'); if(!el)return; const cur=el.value;
+ el.innerHTML=state.accounts.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');
+ if(state.accounts.some(a=>a.id===cur))el.value=cur; saveState();
+}
+function addAccount(){
+ const name=prompt('口座名を入力してください\n例：楽天証券・家族 / SBI証券・本人'); if(!name)return;
+ const id='acc_'+Date.now(); state.accounts.push({id,name,broker:name.includes('SBI')?'SBI証券':(name.includes('楽天')?'楽天証券':'その他')}); saveState();ensureAccounts();$('csvAccount').value=id;toast('口座を追加しました');
+}
+function decodeCsv(buf){
+ const u=new Uint8Array(buf); let utf=new TextDecoder('utf-8').decode(u);
+ const bad=(utf.match(/�/g)||[]).length;
+ if(bad>0 || (!/[ぁ-んァ-ヶ一-龠]/.test(utf) && u.some(x=>x>=0x80))){try{return new TextDecoder('shift-jis').decode(u)}catch(e){}}
+ return utf;
+}
+function parseCsv(text){
+ const rows=[];let row=[],cell='',q=false;
+ for(let i=0;i<text.length;i++){const c=text[i];if(q){if(c==='"'&&text[i+1]==='"'){cell+='"';i++}else if(c==='"')q=false;else cell+=c}else{if(c==='"')q=true;else if(c===','){row.push(cell);cell=''}else if(c==='\n'){row.push(cell.replace(/\r$/,''));rows.push(row);row=[];cell=''}else cell+=c}}
+ if(cell||row.length){row.push(cell);rows.push(row)} return rows;
+}
+function money(v){const n=Number(String(v||'').replace(/[,+¥円\s]/g,''));return Number.isFinite(n)?n:0}
+function classifyAsset(text,base=''){
+ const t=(text||'').toUpperCase();
+ if(/国債|社債|債券|BOND|TREASURY|米国債|TIP\b|TIPS|BND\b|AGG\b|TLT\b|IEF\b|SHY\b|HYG\b|LQD\b|EDV\b|VGIT|VGLT|VTIP/.test(t))return 'bond';
+ if(/金|ゴールド|GOLD|銀|シルバー|SILVER|\bSLV\b|白金|プラチナ|PLATINUM|PALLADIUM|パラジウム|GLD\b|IAU\b/.test(t))return 'comm';
+ if(/暗号|仮想通貨|BITCOIN|BTC|ETHEREUM|ETH\b/.test(t))return 'crypto';
+ if(base.includes('投資信託'))return 'fund'; if(base.includes('国内株'))return 'jp'; if(base.includes('米国株')||base.includes('外国株'))return 'us'; return 'other';
+}
+function holdingsFromRows(rows){
+ let header=null,hi=-1; const out={jp:0,us:0,fund:0,bond:0,comm:0,crypto:0,items:[]};
+ for(let i=0;i<rows.length;i++){if(rows[i].some(x=>String(x).includes('時価評価額')) && rows[i].some(x=>String(x).includes('銘柄'))){header=rows[i];hi=i;break}}
+ if(!header)throw new Error('保有商品明細の見出しを確認できません');
+ let valIdx=header.findIndex(x=>String(x).includes('時価評価額')&&String(x).includes('円')); if(valIdx<0) valIdx=header.findIndex(x=>String(x).includes('時価評価額'));
+ const nameIdx=header.findIndex(x=>String(x).trim()==='銘柄'); const codeIdx=header.findIndex(x=>/銘柄コード|ティッカー/.test(String(x)));
+ for(let i=hi+1;i<rows.length;i++){const r=rows[i]; if(r.some(x=>String(x).includes('参考為替')))break; const base=String(r[0]||''); if(!/株式|投資信託|金・プラチナ|債券|国債|社債/.test(base))continue;
+   const val=money(r[valIdx]); if(!val)continue; const label=[base,r[codeIdx]||'',r[nameIdx]||''].join(' '); const cat=classifyAsset(label,base); if(cat==='other')continue; out[cat]+=val;out.items.push({cat,label:(r[nameIdx]||r[codeIdx]||base),value:val}); }
+ return out;
+}
+function aggregateHoldings(month){
+ const all=state.csvHoldings[month]||{}; const z={jp:0,us:0,fund:0,bond:0,comm:0,crypto:0}; Object.values(all).forEach(a=>Object.keys(z).forEach(k=>z[k]+=num(a[k])));return z;
+}
+function applyHoldingsToForm(month){
+ const z=aggregateHoldings(month); $('jpVal').value=z.jp||'';$('jpCommVal').value='';$('usVal').value=z.us||'';$('usCommVal').value='';
+ $('fundEntries').innerHTML='';addFundRow('CSV取込・株式系投信',z.fund,0,0);$('bondVal').value=z.bond||'';$('directCommVal').value=z.comm||'';$('cryptoVal').value=z.crypto||'';updateInputTotals();
+}
+let pendingCsv=null;
+function previewHoldings(data,fileName){
+ const labels={jp:'国内株',us:'米国株',fund:'株式系投信',bond:'債券',comm:'コモディティ',crypto:'仮想通貨'};
+ $('csvPreview').innerHTML='<div class="preview-list">'+Object.keys(labels).map(k=>`<div class="preview-row"><span>${labels[k]}</span><b>${yen(data[k])}</b></div>`).join('')+`</div><button class="primary-btn" type="button" id="applyCsvBtn" style="width:100%;margin-top:10px">この評価額を反映</button>`;
+ $('csvStatus').textContent=`${fileName}：${data.items.length}明細を解析しました。債券ETF/ファンド、金・銀・白金は実質分類へ振替済みです。`;
+ $('applyCsvBtn').onclick=()=>{const month=$('recordMonth').value,acc=$('csvAccount').value;if(!month)return toast('対象月を選択してください');state.csvHoldings[month]=state.csvHoldings[month]||{};state.csvHoldings[month][acc]={...data,items:undefined,fileName,importedAt:new Date().toISOString()};saveState();applyHoldingsToForm(month);$('csvStatus').textContent='評価額CSVを入力欄へ反映しました。最後に「この月を保存」を押してください。';$('csvPreview').innerHTML='';};
+}
+function tradeRowsFromCsv(rows){
+ let headerIdx=rows.findIndex(r=>r.some(x=>/約定日|受渡日|取引日/.test(String(x)))&&r.some(x=>/銘柄|商品/.test(String(x)))); if(headerIdx<0)headerIdx=0; const h=rows[headerIdx];
+ const dateI=h.findIndex(x=>/約定日|取引日|受渡日/.test(String(x))), nameI=h.findIndex(x=>/銘柄名|銘柄|商品名/.test(String(x))), typeI=h.findIndex(x=>/取引|売買/.test(String(x)));
+ let amountI=h.findIndex(x=>/受渡金額.*円|円換算|精算金額|受渡代金/.test(String(x))); const out=[];
+ for(const r of rows.slice(headerIdx+1)){const txt=r.join(' '); if(!/買付|購入|売却/.test(txt))continue; const ds=String(r[dateI]||txt).match(/(20\d{2})[\/\-.年](\d{1,2})/); if(!ds)continue; const type=/売却/.test(txt)?'sell':'buy'; let amt=amountI>=0?Math.abs(money(r[amountI])):0; if(!amt){const nums=r.map(money).filter(n=>n>=1000);amt=nums.length?Math.max(...nums):0} if(!amt)continue;
+ const name=String(r[nameI]||txt), base=/投信|ファンド/.test(txt)?'投資信託':(/米国|USD|ドル/.test(txt)?'米国株式':'国内株式'); const c=classifyAsset(name+' '+txt,base); const category={jp:'国内株',us:'米国株',fund:'投資信託',bond:'債券',comm:'コモディティ',crypto:'仮想通貨'}[c]; if(!category)continue;
+ out.push({month:`${ds[1]}-${String(ds[2]).padStart(2,'0')}`,category,type,amount:amt,memo:name}); }
+ return out;
+}
+function previewTrades(items,fileName){
+ const sums={};items.forEach(x=>{const k=x.category+'_'+x.type;sums[k]=(sums[k]||0)+x.amount});
+ $('csvPreview').innerHTML='<div class="preview-list">'+Object.entries(sums).map(([k,v])=>`<div class="preview-row"><span>${esc(k.replace('_buy',' 買付').replace('_sell',' 売却'))}</span><b>${yen(v)}</b></div>`).join('')+`</div><button class="primary-btn" type="button" id="applyCsvBtn" style="width:100%;margin-top:10px">この売買履歴を反映</button>`;
+ $('csvStatus').textContent=`${fileName}：${items.length}件を解析しました。内容を確認して反映してください。`;
+ $('applyCsvBtn').onclick=()=>{const acc=$('csvAccount').value;let added=0;items.forEach(x=>{const key=[acc,x.month,x.category,x.type,Math.round(x.amount),x.memo].join('|');if(state.transactions.some(t=>t.importKey===key))return;state.transactions.push({...x,id:'csv_'+Date.now()+'_'+added,accountId:acc,source:'CSV取込',importKey:key});added++});saveState();renderAll();$('csvStatus').textContent=`売買履歴を${added}件追加しました。重複は自動で除外します。`;$('csvPreview').innerHTML='';};
+}
+function readCsvFile(file,kind){const fr=new FileReader();fr.onload=()=>{try{const rows=parseCsv(decodeCsv(fr.result));if(kind==='holdings')previewHoldings(holdingsFromRows(rows),file.name);else{const a=tradeRowsFromCsv(rows);if(!a.length)throw new Error('売買明細を判定できませんでした');previewTrades(a,file.name)}}catch(e){$('csvStatus').textContent='CSVを解析できませんでした：'+e.message}};fr.readAsArrayBuffer(file)}
 
 function latestDisplayKey(){
  const saved=Object.keys(state.months||{}).sort();
@@ -740,6 +838,7 @@ $('homeMonth').onchange=()=>syncPeriod(selectedKey('homeYear','homeMonth'));
 $('investYear').onchange=()=>changeYear('invest');
 $('investMonth').onchange=()=>syncPeriod(selectedKey('investYear','investMonth'));
 
+ensureAccounts();
 const __initialKey=latestDisplayKey();
 if(availablePeriods().length) syncPeriod(__initialKey);
 
