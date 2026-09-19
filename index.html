@@ -16,7 +16,7 @@ h1{font-size:21px;margin:0;font-weight:850} .date{font-size:12px;color:var(--mut
 .page{display:none} #home{display:block} .page:target{display:block}
 body:has(#invest:target) #home,body:has(#input:target) #home,body:has(#data:target) #home{display:none}
 .hero{margin:14px;background:linear-gradient(135deg,var(--primary2),var(--primary));color:#fff;border-radius:22px;padding:19px;box-shadow:0 8px 22px #303b7226}
-.hero .lab{font-size:12px;opacity:.82} .hero .total{font-size:31px;font-weight:850;margin:5px 0 10px}
+.hero .lab{font-size:12px;opacity:.82} .hero .total{font-size:31px;font-weight:850;margin:5px 0 10px}.hero-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.period-inline{width:auto;min-width:132px;max-width:48%;min-height:38px;padding:7px 30px 7px 10px;border:1px solid #ffffff35;border-radius:12px;background:#ffffff18;color:#fff;font-size:14px;font-weight:800;text-align:center;color-scheme:dark}.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.card-head h2{margin:0}.card-period{width:auto;min-width:132px;max-width:52%;min-height:42px;padding:8px 10px;border:1px solid #dfe3e9;border-radius:12px;background:#f8f9fc;font-size:14px;font-weight:800;text-align:center}
 .hero-pills{display:flex;gap:7px;flex-wrap:wrap} .hero-pill{font-size:11px;background:#ffffff20;padding:6px 9px;border-radius:9px}
 .card{background:#fff;border-radius:18px;margin:12px 14px;padding:16px;box-shadow:0 2px 10px #1b24400a}
 h2{font-size:16px;margin:0 0 12px} h3{font-size:13px;margin:16px 0 7px}
@@ -33,7 +33,7 @@ h2{font-size:16px;margin:0 0 12px} h3{font-size:13px;margin:16px 0 7px}
 .chart-toggle button.active{background:#fff;color:#3442b8;box-shadow:0 1px 4px #00000012}
 .ym-select{margin:8px 0 12px;min-width:0;max-width:100%;overflow:hidden}.period-picker{display:block;width:100%;max-width:100%;min-width:0;min-height:58px;padding:12px 10px;border:1px solid #dfe3e9;border-radius:15px;background:#fff;color:#182033;font-size:18px;font-weight:700;text-align:center;text-align-last:center;line-height:1.2;-webkit-appearance:none;appearance:none}.hidden-period{display:none}
 select,input{width:100%;padding:11px 12px;border:1px solid #dfe3e9;border-radius:12px;background:#fff;color:#182033}
-.chartbox{width:100%;overflow:hidden;min-height:205px} .asset-svg{display:block;width:100%;height:auto}
+.chartbox{width:100%;overflow:hidden;min-height:205px;position:relative;touch-action:none}.asset-svg{display:block;width:100%;height:auto}.chart-tooltip{position:absolute;z-index:5;display:none;transform:translate(-50%,-110%);background:#182033;color:#fff;border-radius:10px;padding:7px 9px;font-size:11px;line-height:1.35;white-space:nowrap;box-shadow:0 6px 18px #18203330;pointer-events:none}.chart-tooltip b{display:block;font-size:13px}
 .field{margin:14px 0;min-width:0;max-width:100%;overflow:hidden} .field-label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:750}
 .columns-head{display:grid;gap:6px;font-size:9px;color:#8a91a0;margin-bottom:4px;padding:0 3px}
 .columns-head.bank{grid-template-columns:1.2fr .85fr 34px}
@@ -50,7 +50,7 @@ select,input{width:100%;padding:11px 12px;border:1px solid #dfe3e9;border-radius
 .calc3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
 .calc3 label,.calc2 label{font-size:9px;color:#7b8290}
 .calc3 input,.calc2 input{margin-top:4px;padding:9px 7px;font-size:12px}
-.calc2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.calc2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.calc2>*{min-width:0}.tx-grid label{min-width:0;overflow:hidden}.tx-grid input,.tx-grid select{min-width:0;max-width:100%}
 .reclass-box{background:#f7f8fb;border:1px solid #edf0f5;border-radius:14px;padding:11px;margin-top:8px}
 .note{font-size:10px;line-height:1.5;color:#737b89;background:#fafbfc;border-radius:10px;padding:8px;margin-top:8px}
 .info{font-size:10px;line-height:1.5;color:#4450b9;background:#eef0ff;border-radius:10px;padding:8px;margin-top:8px}
@@ -72,6 +72,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 .bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;height:72px;background:#fff;border-top:1px solid #e5e7eb;display:grid;grid-template-columns:repeat(4,1fr);z-index:30}
 .bottom a{text-decoration:none;text-align:center;color:#8a909d;font-size:10px;padding-top:10px} .bottom a span{display:block;font-size:21px;margin-bottom:2px}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#182033;color:#fff;padding:9px 12px;border-radius:11px;font-size:11px;z-index:99;display:none;max-width:340px;text-align:center}
+@media(max-width:480px){.tx-grid{grid-template-columns:1fr}.period-inline{min-width:128px;max-width:52%}.card-period{min-width:128px;max-width:55%}}
 @media(max-width:390px){.calc3{grid-template-columns:1fr}.entry-row.fund,.columns-head.fund{grid-template-columns:1fr .8fr .8fr .8fr 30px}.pie-wrap{grid-template-columns:145px 1fr;gap:10px}.pie{width:145px;height:145px}.pie:after{inset:36px}.period-picker{min-height:60px;font-size:17px}}
 </style>
 
@@ -88,13 +89,10 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 
 <section id="home" class="page">
 <div class="hero">
-<div class="lab">総資産</div><div class="total" id="homeTotal">¥63,129,406</div>
-<div class="hero-pills"><span class="hero-pill" id="homeMom">前月比 +¥3,044,508</span><span class="hero-pill" id="homeYoy">前年比 —</span></div>
-</div>
-<div class="card">
-<h2>表示する年月</h2>
-<div class="ym-select"><input class="period-picker" type="month" id="homePeriod" aria-label="ホームの表示年月"></div>
+<div class="hero-head"><div class="lab">総資産</div><input class="period-inline" type="month" id="homePeriod" aria-label="ホームの表示年月"></div>
 <div class="hidden-period"><select id="homeYear"></select><select id="homeMonth"></select></div>
+<div class="total" id="homeTotal">¥63,129,406</div>
+<div class="hero-pills"><span class="hero-pill" id="homeMom">前月比 +¥3,044,508</span><span class="hero-pill" id="homeYoy">前年比 —</span></div>
 </div>
 <div class="grid">
 <div class="mini bank-card"><div class="lab">銀行・預金等</div><b id="homeBank">¥5,968,022</b></div>
@@ -108,12 +106,12 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <div class="ym-select"><input class="period-picker" type="month" id="graphPeriod" aria-label="資産推移の基準年月"></div>
 <div class="sub">選択した期末までの直近12か月</div>
 </div>
-<div class="chartbox" id="chartBox"><div class="sub" style="padding:80px 12px;text-align:center">データ取込後にグラフを表示します。</div></div>
+<div class="chartbox" id="chartBox"><div class="chart-tooltip" id="chartTooltip"></div><div class="sub" style="padding:80px 12px;text-align:center">データ取込後にグラフを表示します。</div></div>
 <div class="sub" id="chartCaption">—</div>
 </div>
 
 <div class="card">
-<h2>資産が増えた理由</h2>
+<div class="card-head"><h2>資産が増えた理由</h2><span class="sub" id="reasonPeriod">年初来</span></div>
 <div class="data-row"><span>総資産の増加</span><b id="reasonTotal">+¥3,044,508</b></div>
 <div class="data-row"><span>貯蓄等による増加（推定）</span><b id="reasonSaving">—</b></div>
 <div class="data-row"><span>投資損益</span><b id="reasonInvest">—</b></div>
@@ -122,12 +120,8 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 
 <section id="invest" class="page">
 <div class="card">
-<h2>表示する年月</h2>
-<div class="ym-select"><input class="period-picker" type="month" id="investPeriod" aria-label="投資の表示年月"></div>
+<div class="card-head"><h2>資産配分</h2><input class="card-period" type="month" id="investPeriod" aria-label="投資の表示年月"></div>
 <div class="hidden-period"><select id="investYear"></select><select id="investMonth"></select></div>
-</div>
-<div class="card">
-<h2>資産配分</h2>
 <div class="pie-wrap"><div class="pie" id="allocationPie"><div class="pie-center"><b>資産配分</b><span>5 classes</span></div></div><div>
 <div class="ratio" id="allocationRatio">—</div>
 <div class="sub">実質的な資産クラスで5分類</div>
@@ -256,7 +250,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <div class="card">
 <h2>買付・売却履歴</h2>
 <div class="sub">過去分を手入力する場合はこちら。今後の月次入力で保存した買付・売却は自動で履歴に含まれます。</div>
-<div class="calc2" style="margin-top:10px">
+<div class="calc2 tx-grid" style="margin-top:10px">
 <label>年月<input type="month" id="txMonth" value="2026-01"></label>
 <label>カテゴリ<select id="txCategory"><option>国内株</option><option>米国株</option><option>投資信託</option><option>債券</option><option>コモディティ</option><option>仮想通貨</option></select></label>
 <label>区分<select id="txType"><option value="buy">買付</option><option value="sell">売却</option></select></label>
@@ -551,14 +545,17 @@ function renderHome(){
  $('homeMom').textContent='前月比 '+signedYen(cur.total-pr.total);
  const yoy=periodRecord(`${cur.year-1}-${String(cur.m).padStart(2,'0')}`);
  $('homeYoy').textContent=yoy?`前年比 ${signedYen(cur.total-yoy.total)}`:'前年比 —';
- const tx=allTransactions().filter(x=>x.month===cur.month);
+ const prevDec=periodRecord(`${cur.year-1}-12`);
+ const start=prevDec||pr;
+ const tx=allTransactions().filter(x=>x.month>=`${cur.year}-01`&&x.month<=cur.month);
  const buy=tx.filter(x=>x.type==='buy').reduce((a,x)=>a+num(x.amount),0);
  const sell=tx.filter(x=>x.type==='sell').reduce((a,x)=>a+num(x.amount),0);
- const invGain=cur.invest-pr.invest-buy+sell;
- const totalChange=cur.total-pr.total;
+ const invGain=cur.invest-start.invest-buy+sell;
+ const totalChange=cur.total-start.total;
  $('reasonTotal').textContent=signedYen(totalChange);
  $('reasonInvest').textContent=signedYen(invGain);
  $('reasonSaving').textContent=signedYen(totalChange-invGain);
+ $('reasonPeriod').textContent=prevDec?`${cur.year}年1月〜${cur.m}月`:`${start.label}〜${cur.label}`;
 }
 
 function currentBreakdown(){
@@ -627,7 +624,7 @@ function svgDynamic(data,annual=false){
  data.forEach((d,i)=>s+=`<circle cx="${x(i)}" cy="${y(d.total)}" r="8" fill="transparent"><title>${d.label} ${yen(d.total)}</title></circle><circle cx="${x(i)}" cy="${y(d.total)}" r="3.4" fill="#5969d9" pointer-events="none"/>`);
  return s+'</svg>';
 }
-let chartMode='month';
+let chartMode='month',chartCurrentData=[],chartCurrentAnnual=false;
 function fillGraphOptions(){
  const h=combinedHistory();
  if(!h.length){ if($('graphPeriod')) $('graphPeriod').value=''; return; }
@@ -644,14 +641,28 @@ function renderChart(){
  }
  if(chartMode==='year'){
   const map={};h.forEach(x=>map[x.year]=x);const data=Object.keys(map).sort().map(k=>map[k]);
-  $('chartBox').innerHTML=svgDynamic(data,true);$('chartCaption').textContent='全期間（各年の最終記録）';$('monthControls').style.display='none';return;
+  chartCurrentData=data;chartCurrentAnnual=true;$('chartBox').innerHTML='<div class="chart-tooltip" id="chartTooltip"></div>'+svgDynamic(data,true);$('chartCaption').textContent='全期間（各年の最終記録）・グラフを長押しで金額表示';$('monthControls').style.display='none';return;
  }
  $('monthControls').style.display='block';
  const [y,m]=($('graphPeriod').value||combinedHistory().at(-1).month).split('-').map(Number);
  let idx=h.findIndex(x=>x.year===y&&x.m===m);if(idx<0)idx=h.length-1;
  const data=h.slice(Math.max(0,idx-11),idx+1);
- $('chartBox').innerHTML=svgDynamic(data,false);$('chartCaption').textContent=data[0].label+'〜'+data.at(-1).label;
+ chartCurrentData=data;chartCurrentAnnual=false;$('chartBox').innerHTML='<div class="chart-tooltip" id="chartTooltip"></div>'+svgDynamic(data,false);$('chartCaption').textContent=data[0].label+'〜'+data.at(-1).label+'・グラフを長押しで金額表示';
 }
+
+function showChartTooltip(e){
+ const box=$('chartBox'),tip=$('chartTooltip'); if(!box||!tip||!chartCurrentData.length)return;
+ const r=box.getBoundingClientRect(),px=Math.max(0,Math.min(r.width,e.clientX-r.left));
+ const left=r.width*(60/390),right=r.width*(12/390),usable=Math.max(1,r.width-left-right);
+ const t=Math.max(0,Math.min(1,(px-left)/usable));
+ const i=Math.round(t*Math.max(0,chartCurrentData.length-1)),d=chartCurrentData[i];
+ const x=left+usable*(i/Math.max(1,chartCurrentData.length-1));
+ tip.innerHTML=`<span>${chartCurrentAnnual?d.year+'年':d.label}</span><b>${yen(d.total)}</b>`;tip.style.left=x+'px';tip.style.top='82px';tip.style.display='block';
+}
+function hideChartTooltip(){const tip=$('chartTooltip');if(tip)tip.style.display='none'}
+$('chartBox').addEventListener('pointerdown',e=>{showChartTooltip(e);try{$('chartBox').setPointerCapture(e.pointerId)}catch(_){}});
+$('chartBox').addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch')showChartTooltip(e)});
+$('chartBox').addEventListener('pointerup',hideChartTooltip);$('chartBox').addEventListener('pointercancel',hideChartTooltip);$('chartBox').addEventListener('pointerleave',hideChartTooltip);
 
 function renderTransactions(){
  const arr=allTransactions().slice().reverse();
