@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#303b72">
-<title>資産管理</title>
+<title>資産管理 V2.4</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#f4f6f8;--text:#182033;--muted:#7b8290;--primary:#5969d9;--primary2:#303b72;--soft:#eef0ff;--green:#3d9c75;--gold:#d49c3d;--red:#c94a55;--line:#edf0f4}
@@ -24,7 +24,7 @@ h2{font-size:16px;margin:0 0 12px} h3{font-size:13px;margin:16px 0 7px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 14px}
 .mini{background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 10px #1b24400a}
 .mini .lab{font-size:11px;color:var(--muted)} .mini b{font-size:18px;display:block;margin-top:5px}
-.bank-card{border-top:3px solid #46a57a} .invest-card{border-top:3px solid var(--primary)}
+.bank-card{border-top:3px solid #46a57a;cursor:pointer;position:relative}.bank-card:after{content:"詳細 ›";position:absolute;right:12px;top:12px;font-size:9px;color:#6b8f7d;font-weight:800}.invest-card{border-top:3px solid var(--primary)}
 .data-row{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
 .data-row:last-child{border-bottom:0}
 .good{color:#16844a} .bad{color:#c2414b}
@@ -64,14 +64,14 @@ select,input{width:100%;padding:11px 12px;border:1px solid #dfe3e9;border-radius
 .ratio{font-size:23px;font-weight:850;letter-spacing:-.03em}
 .kpi{background:#f8f9fb;border-radius:14px;padding:12px;margin-top:8px}
 .kpi .label{font-size:10px;color:var(--muted)} .kpi .value{font-size:23px;font-weight:850;margin-top:3px}
-.table-wrap{overflow:auto;border:1px solid #edf0f4;border-radius:12px}
+.table-wrap{overflow:auto;border:1px solid #edf0f4;border-radius:12px}.tx-table{min-width:700px}.tx-table th:first-child,.tx-table td:first-child{min-width:82px}.tx-table th:nth-child(2),.tx-table td:nth-child(2){min-width:90px}
 table{border-collapse:collapse;width:100%;min-width:640px;font-size:11px}
 th,td{padding:8px 7px;border-bottom:1px solid #edf0f4;text-align:right;white-space:nowrap}
 th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:first-child,th:first-child{text-align:left}
 .status{padding:4px 7px;border-radius:999px;background:#eef0ff;color:#3442b8;font-size:10px;font-weight:750}
 .bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;height:72px;background:#fff;border-top:1px solid #e5e7eb;display:grid;grid-template-columns:repeat(4,1fr);z-index:30}
 .bottom a{text-decoration:none;text-align:center;color:#8a909d;font-size:10px;padding-top:10px} .bottom a span{display:block;font-size:21px;margin-bottom:2px}
-.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#182033;color:#fff;padding:9px 12px;border-radius:11px;font-size:11px;z-index:99;display:none;max-width:340px;text-align:center}
+.bank-detail{display:none;margin:10px 14px 0;background:#fff;border:1px solid #e8ecef;border-radius:16px;padding:12px 14px}.bank-detail.open{display:block}.bank-detail-head{display:flex;justify-content:space-between;align-items:center}.bank-detail-head button{border:0;background:#f2f5f4;border-radius:9px;padding:6px 9px}.bank-detail-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:8px 0;border-bottom:1px solid #eef1f2;font-size:12px}.bank-detail-row:last-child{border-bottom:0}.bank-detail-row small{display:block;color:#8a919a;margin-top:2px}.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#182033;color:#fff;padding:9px 12px;border-radius:11px;font-size:11px;z-index:99;display:none;max-width:340px;text-align:center}
 @media(max-width:480px){.tx-grid{grid-template-columns:1fr}.period-inline{min-width:128px;max-width:52%}.card-period{min-width:128px;max-width:55%}}
 @media(max-width:390px){.calc3{grid-template-columns:1fr}.entry-row.fund,.columns-head.fund{grid-template-columns:1fr .8fr .8fr .8fr 30px}.pie-wrap{grid-template-columns:145px 1fr;gap:10px}.pie{width:145px;height:145px}.pie:after{inset:36px}.period-picker{min-height:60px;font-size:17px}}
 </style>
@@ -95,17 +95,14 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <div class="hero-pills"><span class="hero-pill" id="homeMom">前月比 +¥3,044,508</span><span class="hero-pill" id="homeYoy">前年比 —</span></div>
 </div>
 <div class="grid">
-<div class="mini bank-card"><div class="lab">銀行・預金等</div><b id="homeBank">¥5,968,022</b></div>
+<div class="mini bank-card" id="homeBankCard" role="button" tabindex="0"><div class="lab">銀行・預金等</div><b id="homeBank">¥5,968,022</b></div>
 <div class="mini invest-card"><div class="lab">投資資産</div><b id="homeInvest">¥57,161,384</b></div>
 </div>
+<div class="bank-detail" id="homeBankDetail"><div class="bank-detail-head"><b>口座別残高</b><button type="button" id="closeBankDetail">閉じる</button></div><div id="homeBankRows"></div></div>
 
 <div class="card">
 <h2>資産の推移</h2>
 <div class="chart-toggle"><button type="button" id="monthMode" class="active">月次</button><button type="button" id="yearMode">年次</button></div>
-<div id="monthControls">
-<div class="ym-select"><input class="period-picker" type="month" id="graphPeriod" aria-label="資産推移の基準年月"></div>
-<div class="sub">選択した期末までの直近12か月</div>
-</div>
 <div class="chartbox" id="chartBox"><div class="chart-tooltip" id="chartTooltip"></div><div class="sub" style="padding:80px 12px;text-align:center">データ取込後にグラフを表示します。</div></div>
 <div class="sub" id="chartCaption">—</div>
 </div>
@@ -156,7 +153,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <h2>月次入力</h2>
 <div class="field"><label class="field-label">対象月</label><input class="period-picker" type="month" id="recordMonth" value="2026-09"></div>
 <div class="action-row"><button class="secondary-btn" type="button" id="loadMonthBtn">この月を読込</button><button class="primary-btn" type="button" id="saveMonthBtn">この月を保存</button></div>
-<div class="note">保存後、同じ月を選んで「この月を読込」を押すと、口座内訳も含めて再表示できます。</div>
+<div class="note">保存後、同じ月を選んで「この月を読込」を押すと、口座内訳も含めて再表示できます。</div><div class="kpi"><div class="label">この月の売買</div><div class="data-row"><span>登録済み取引</span><b id="inputTxCount">0件</b></div><div class="data-row"><span>買付 / 売却</span><b id="inputTxTotals">¥0 / ¥0</b></div><div class="sub">詳細の確認・修正・削除は「データ」タブで行います。</div></div>
 <div class="import-box">
 <h3>CSVでかんたん入力</h3>
 <div class="sub">証券口座ごとに「評価額CSV」と「売買履歴CSV」を読み込めます。手入力はこの下に残しています。</div>
@@ -235,21 +232,8 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 
 <section id="data" class="page">
 <div class="card">
-<h2>2026年 取引履歴取込</h2>
-<div class="data-row"><span>取込対象</span><b>2026年1月〜8月</b></div>
-<div class="data-row"><span>投資信託買付</span><b>¥1,200,000</b></div>
-<div class="data-row"><span>国内株買付</span><b>¥278,750</b></div>
-<div class="data-row"><span>米国株買付</span><b>¥480,332</b></div>
-<div class="data-row"><span>米国株売却</span><b>¥153,170</b></div>
-<div class="data-row"><span>コモディティ買付</span><b>¥10,505,525</b></div>
-<div class="data-row"><span>コモディティ売却</span><b>¥9,389,040</b></div>
-<div class="data-row"><span>仮想通貨売却</span><b>¥793,000</b></div>
-<div class="info">9月取引は9月末評価額との時点を合わせるため未計上です。SLVの2026年7月USD決済分のみ、画面表示の為替レートによる参考円換算を使用しています。</div>
-</div>
-
-<div class="card">
 <h2>買付・売却履歴</h2>
-<div class="sub">過去分を手入力する場合はこちら。今後の月次入力で保存した買付・売却は自動で履歴に含まれます。</div>
+<div class="sub">履歴の確認・管理を行う場所です。過去分の手入力もここから追加できます。CSV取込は「入力」タブで行います。</div>
 <div class="calc2 tx-grid" style="margin-top:10px">
 <label>年月<input type="month" id="txMonth" value="2026-01"></label>
 <label>カテゴリ<select id="txCategory"><option>国内株</option><option>米国株</option><option>投資信託</option><option>債券</option><option>コモディティ</option><option>仮想通貨</option></select></label>
@@ -258,7 +242,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 </div>
 <div class="field"><label class="field-label">メモ</label><input type="text" id="txMemo" placeholder="任意"></div>
 <button class="primary-btn" type="button" id="addTxBtn" style="width:100%">履歴を追加</button>
-<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>年月</th><th>カテゴリ</th><th>区分</th><th>金額</th><th>メモ</th><th></th></tr></thead><tbody id="txBody"></tbody></table></div>
+<div class="table-wrap" style="margin-top:12px"><table class="tx-table"><thead><tr><th>年月</th><th>カテゴリ</th><th>区分</th><th>金額</th><th>メモ</th><th></th></tr></thead><tbody id="txBody"></tbody></table></div>
 </div>
 
 <div class="card">
@@ -556,6 +540,12 @@ function renderHome(){
  $('reasonInvest').textContent=signedYen(invGain);
  $('reasonSaving').textContent=signedYen(totalChange-invGain);
  $('reasonPeriod').textContent=prevDec?`${cur.year}年1月〜${cur.m}月`:`${start.label}〜${cur.label}`;
+ renderBankDetail(cur.month,cur.bank);
+}
+function renderBankDetail(month,total){
+ const rows=state.months?.[month]?.banks||[],box=$('homeBankRows');if(!box)return;
+ if(!rows.length){box.innerHTML='<div class="sub" style="padding:8px 0">この月は口座別内訳が未登録です。合計 '+yen(total)+' のみ確認できます。</div>';return;}
+ const sum=rows.reduce((a,x)=>a+num(x.value),0)||1;box.innerHTML=rows.slice().sort((a,b)=>num(b.value)-num(a.value)).map(x=>'<div class="bank-detail-row"><span>'+esc(x.name||'口座')+'<small>'+(num(x.value)/sum*100).toFixed(1)+'%</small></span><b>'+yen(x.value)+'</b></div>').join('');
 }
 
 function currentBreakdown(){
@@ -625,26 +615,20 @@ function svgDynamic(data,annual=false){
  return s+'</svg>';
 }
 let chartMode='month',chartCurrentData=[],chartCurrentAnnual=false;
-function fillGraphOptions(){
- const h=combinedHistory();
- if(!h.length){ if($('graphPeriod')) $('graphPeriod').value=''; return; }
- const valid=h.map(x=>x.month);
- let cur=$('graphPeriod')?.value;
- if(!valid.includes(cur)) cur=h.at(-1).month;
- if($('graphPeriod')) $('graphPeriod').value=cur;
-}
+function fillGraphOptions(){}
 function renderChart(){
  const h=combinedHistory();
  if(!h.length){
    $('chartBox').innerHTML='<div style="padding:54px 12px;text-align:center;color:#8a91a0">「データ」→「バックアップ復元」から初期データを取り込むと資産推移が表示されます。</div>';
    $('chartCaption').textContent='データ未取込'; return;
  }
+ const selected=$('homePeriod')?.value||h.at(-1).month;
+ const [selectedYear,selectedMonth]=selected.split('-').map(Number);
  if(chartMode==='year'){
-  const map={};h.forEach(x=>map[x.year]=x);const data=Object.keys(map).sort().map(k=>map[k]);
-  chartCurrentData=data;chartCurrentAnnual=true;$('chartBox').innerHTML='<div class="chart-tooltip" id="chartTooltip"></div>'+svgDynamic(data,true);$('chartCaption').textContent='全期間（各年の最終記録）・グラフを長押しで金額表示';$('monthControls').style.display='none';return;
+  const map={};h.filter(x=>x.year<=selectedYear).forEach(x=>map[x.year]=x);const data=Object.keys(map).sort().map(k=>map[k]);
+  chartCurrentData=data;chartCurrentAnnual=true;$('chartBox').innerHTML='<div class="chart-tooltip" id="chartTooltip"></div>'+svgDynamic(data,true);$('chartCaption').textContent=`${data[0].year}年〜${data.at(-1).year}年（各年の最終記録）・グラフを長押しで金額表示`;return;
  }
- $('monthControls').style.display='block';
- const [y,m]=($('graphPeriod').value||combinedHistory().at(-1).month).split('-').map(Number);
+ const [y,m]=[selectedYear,selectedMonth];
  let idx=h.findIndex(x=>x.year===y&&x.m===m);if(idx<0)idx=h.length-1;
  const data=h.slice(Math.max(0,idx-11),idx+1);
  chartCurrentData=data;chartCurrentAnnual=false;$('chartBox').innerHTML='<div class="chart-tooltip" id="chartTooltip"></div>'+svgDynamic(data,false);$('chartCaption').textContent=data[0].label+'〜'+data.at(-1).label+'・グラフを長押しで金額表示';
@@ -714,7 +698,8 @@ function importJson(file){
    state=x.state||x;saveState();renderAll();toast('バックアップを復元しました');
  }catch(e){toast('バックアップファイルを確認してください')}};r.readAsText(file);
 }
-function renderAll(){renderHome();renderInvest();renderTransactions();renderMonths();fillGraphOptions();renderChart();}
+function renderInputTxSummary(){const month=$('recordMonth')?.value;if(!month)return;const tx=allTransactions().filter(x=>x.month===month),buy=tx.filter(x=>x.type==='buy').reduce((a,x)=>a+num(x.amount),0),sell=tx.filter(x=>x.type==='sell').reduce((a,x)=>a+num(x.amount),0);if($('inputTxCount'))$('inputTxCount').textContent=tx.length+'件';if($('inputTxTotals'))$('inputTxTotals').textContent=yen(buy)+' / '+yen(sell);}
+function renderAll(){renderHome();renderInvest();renderTransactions();renderMonths();renderInputTxSummary();renderChart();}
 
 $('addBankBtn').onclick=()=>addBankRow();
 $('addAccountBtn').onclick=addAccount; $('holdingsCsv').onchange=e=>{if(e.target.files[0])readCsvFile(e.target.files[0],'holdings')}; $('tradesCsv').onchange=e=>{if(e.target.files[0])readCsvFile(e.target.files[0],'trades')};
@@ -727,7 +712,6 @@ $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=e=>{
 $('resetBtn').onclick=()=>{if(confirm('このアプリで保存した入力データを初期化しますか？既存Excelのデータは消えません。')){state=defaultState();saveState();resetRows();renderAll();toast('入力データを初期化しました')}};
 $('monthMode').onclick=()=>{chartMode='month';$('monthMode').classList.add('active');$('yearMode').classList.remove('active');renderChart()};
 $('yearMode').onclick=()=>{chartMode='year';$('yearMode').classList.add('active');$('monthMode').classList.remove('active');renderChart()};
-$('graphPeriod').onchange=renderChart;
 ['jpVal','jpBuy','jpSell','jpCommVal','jpCommBuy','jpCommSell','usVal','usBuy','usSell','usCommVal','usCommBuy','usCommSell','bondVal','bondBuy','bondSell','directCommVal','directCommBuy','directCommSell','cryptoVal','cryptoBuy','cryptoSell'].forEach(id=>$(id).addEventListener('input',updateInputTotals));
 
 
@@ -822,7 +806,6 @@ function syncPeriod(key){
  fillPeriodPair('homeYear','homeMonth',target.key);
  fillPeriodPair('investYear','investMonth',target.key);
  if($('homePeriod'))$('homePeriod').value=target.key;if($('investPeriod'))$('investPeriod').value=target.key;
- if($('graphPeriod')) $('graphPeriod').value=target.key;
  renderHome();renderInvest();renderChart();
 }
 function changeYear(prefix){
@@ -835,6 +818,7 @@ function changeYear(prefix){
 }
 function pickPeriod(v){if(!v)return;const ps=availablePeriods();const exact=ps.find(x=>x.key===v);if(exact)syncPeriod(v);else toast('この年月のデータはまだありません')}
 $('homePeriod').onchange=e=>pickPeriod(e.target.value);
+$('homeBankCard').onclick=()=>$('homeBankDetail').classList.toggle('open');$('closeBankDetail').onclick=e=>{e.stopPropagation();$('homeBankDetail').classList.remove('open')};$('recordMonth').addEventListener('change',renderInputTxSummary);
 $('investPeriod').onchange=e=>pickPeriod(e.target.value);
 
 $('undoCsvBtn').onclick=undoLastCsv;updateUndoButton();
