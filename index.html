@@ -759,21 +759,53 @@ function findSummaryAmount(rows,label){
  for(const r of rows){if(String(r[0]||'').trim()===label){for(let i=1;i<r.length;i++){const v=money(r[i]);if(v>0)return v}}}return 0;
 }
 function holdingsFromRows(rows){
- const out={jp:0,us:0,fund:0,bond:0,comm:0,jpComm:0,usComm:0,directComm:0,crypto:0,cash:0,items:[],sourceTotal:0,sourceAssetTotal:0};
+ const out={jp:0,us:0,fund:0,bond:0,comm:0,jpComm:0,usComm:0,directComm:0,crypto:0,cash:0,items:[],sourceTotal:0,sourceAssetTotal:0,summaryBase:{}};
  out.sourceTotal=findSummaryAmount(rows,'保有商品の評価額合計');
  out.cash=findSummaryAmount(rows,'預り金合計');
  out.sourceAssetTotal=findSummaryAmount(rows,'資産合計');
+ // 楽天の「資産合計欄」を絶対基準にする。預り金・外貨預り金を保有商品へ混入させない。
+ const sJP=findSummaryAmount(rows,'国内株式');
+ const sUS=findSummaryAmount(rows,'米国株式');
+ const sFund=findSummaryAmount(rows,'投資信託');
+ const sGold=findSummaryAmount(rows,'金・プラチナ');
+ const sBondJP=findSummaryAmount(rows,'国内債券');
+ const sBondForeign=findSummaryAmount(rows,'外国債券');
+ out.summaryBase={jp:sJP,us:sUS,fund:sFund,gold:sGold,bond:sBondJP+sBondForeign};
  let header=null,hi=-1;
  for(let i=0;i<rows.length;i++){const joined=rows[i].join(' ');if(/種別/.test(joined)&&/銘柄/.test(joined)&&/時価評価額/.test(joined)){header=rows[i];hi=i;break}}
  if(!header)throw new Error('保有商品詳細の見出しを確認できません');
  const idx=(re)=>header.findIndex(x=>re.test(String(x).replace(/\s/g,'')));
- let valIdx=idx(/時価評価額.*円/); if(valIdx<0)valIdx=idx(/時価評価額/);
+ let valIdx=idx(/^時価評価額\[円\]$/); if(valIdx<0)valIdx=idx(/時価評価額.*円/); if(valIdx<0)valIdx=idx(/時価評価額/);
  const nameIdx=idx(/^銘柄$/), codeIdx=idx(/銘柄コード|ティッカー/), typeIdx=idx(/^種別$/);
- for(let i=hi+1;i<rows.length;i++){const r=rows[i];const joined=r.join(' ');if(/参考為替レート/.test(joined))break;const base=String(r[typeIdx>=0?typeIdx:0]||'');if(!base)continue;const val=money(r[valIdx]);if(!val)continue;const name=String(r[nameIdx]||''),code=String(r[codeIdx]||'');const cat=classifyAsset([base,code,name].join(' '),base);if(cat==='other')continue;if(cat==='comm'){out.comm+=val;if(/国内株/.test(base))out.jpComm+=val;else if(/米国株|外国株/.test(base))out.usComm+=val;else out.directComm+=val;}else out[cat]+=val;out.items.push({cat,label:name||code||base,value:val});}
+ let jpComm=0,usComm=0,fundBond=0,jpBond=0,usBond=0,detailCrypto=0;
+ const excluded=/預り金|外貨預り金|MRF|信用取引保証金|先物|オプション/;
+ for(let i=hi+1;i<rows.length;i++){
+   const r=rows[i], joined=r.join(' '); if(/参考為替レート/.test(joined))break;
+   const base=String(r[typeIdx>=0?typeIdx:0]||'').trim(); if(!base||excluded.test(base))continue;
+   const val=money(r[valIdx]); if(!val)continue;
+   const name=String(r[nameIdx]||''),code=String(r[codeIdx]||''), label=[base,code,name].join(' ');
+   const cat=classifyAsset(label,base);
+   if(cat==='comm'){
+     if(/国内株/.test(base))jpComm+=val; else if(/米国株|外国株/.test(base))usComm+=val;
+   }else if(cat==='bond'){
+     if(/投資信託/.test(base))fundBond+=val; else if(/国内株/.test(base))jpBond+=val; else if(/米国株|外国株/.test(base))usBond+=val;
+   }else if(cat==='crypto')detailCrypto+=val;
+   out.items.push({cat,label:name||code||base,value:val,base});
+ }
+ // 大分類の金額はCSV集計欄を採用し、明細は「振替」にだけ使う。
+ // これにより外貨預り金等が明細側から紛れ込んでも保有商品総額は変わらない。
+ out.jp=Math.max(0,sJP-jpComm-jpBond);
+ out.us=Math.max(0,sUS-usComm-usBond);
+ out.fund=Math.max(0,sFund-fundBond);
+ out.jpComm=jpComm; out.usComm=usComm; out.directComm=sGold;
+ out.comm=jpComm+usComm+sGold;
+ out.bond=sBondJP+sBondForeign+fundBond+jpBond+usBond;
+ out.crypto=detailCrypto;
  out.parsedTotal=['jp','us','fund','bond','comm','crypto'].reduce((a,k)=>a+out[k],0);
  out.diff=out.sourceTotal?out.sourceTotal-out.parsedTotal:0;
- out.assetCheckTotal=out.parsedTotal+out.cash;
+ out.assetCheckTotal=out.sourceTotal+out.cash; // 最終照合はCSV集計欄同士で行う
  out.assetDiff=out.sourceAssetTotal?out.sourceAssetTotal-out.assetCheckTotal:0;
+ out.reclass={jpComm,usComm,fundBond,jpBond,usBond,directComm:sGold};
  return out;
 }
 function aggregateHoldings(month){
@@ -793,7 +825,7 @@ function previewHoldings(data,fileName){
  const labels={jp:'国内株',us:'米国株',fund:'株式系投信',bond:'債券',comm:'コモディティ',crypto:'仮想通貨',cash:'証券口座・預り金'};
  $('csvPreview').innerHTML='<div class="preview-list">'+Object.keys(labels).map(k=>`<div class="preview-row"><span>${labels[k]}</span><b>${yen(data[k])}</b></div>`).join('')+`</div><div class="action-row"><button class="secondary-btn" type="button" id="cancelCsvBtn">キャンセル</button><button class="primary-btn" type="button" id="applyCsvBtn">この評価額を反映</button></div>`;
  const holdingsOk=!data.sourceTotal||Math.abs(data.diff)<=2, assetOk=!data.sourceAssetTotal||Math.abs(data.assetDiff)<=2, ok=holdingsOk&&assetOk;
- $('csvStatus').innerHTML=`${esc(fileName)}：${data.items.length}明細を解析しました。<div class="csv-check ${holdingsOk?'':'warn'}">保有商品 ${yen(data.sourceTotal||data.parsedTotal)} ／ 分類後 ${yen(data.parsedTotal)}${holdingsOk?' ✓':` ／ 差額 ${signedYen(data.diff)} ⚠`}</div><div class="csv-check ${assetOk?'':'warn'}">保有商品 ${yen(data.parsedTotal)} ＋ 預り金 ${yen(data.cash)} ＝ ${yen(data.assetCheckTotal)}${data.sourceAssetTotal?` ／ CSV資産合計 ${yen(data.sourceAssetTotal)}`:''}${assetOk?' ✓':` ／ 差額 ${signedYen(data.assetDiff)} ⚠`}</div>`;
+ $('csvStatus').innerHTML=`${esc(fileName)}：${data.items.length}明細を解析しました。<div class="csv-check ${holdingsOk?'':'warn'}">CSV保有商品 ${yen(data.sourceTotal||data.parsedTotal)} ／ 分類後 ${yen(data.parsedTotal)}${holdingsOk?' ✓':` ／ 差額 ${signedYen(data.diff)} ⚠`}</div><div class="csv-check ${assetOk?'':'warn'}">CSV保有商品 ${yen(data.sourceTotal)} ＋ 預り金 ${yen(data.cash)} ＝ ${yen(data.assetCheckTotal)}${data.sourceAssetTotal?` ／ CSV資産合計 ${yen(data.sourceAssetTotal)}`:''}${assetOk?' ✓':` ／ 差額 ${signedYen(data.assetDiff)} ⚠`}</div>`;
  $('cancelCsvBtn').onclick=()=>{$('csvPreview').innerHTML='';$('csvStatus').textContent='CSVの内容を破棄しました。既存データは変更していません。'};
  $('applyCsvBtn').onclick=()=>{if((data.sourceTotal&&Math.abs(data.diff)>2)||(data.sourceAssetTotal&&Math.abs(data.assetDiff)>2))return toast('CSV合計の照合が一致しないため反映を停止しました');const month=$('recordMonth').value,acc=$('csvAccount').value;if(!month)return toast('対象月を選択してください');const prev=state.csvHoldings[month]?.[acc]||null;state.lastCsvUndo={kind:'holdings',month,acc,prev};state.csvHoldings[month]=state.csvHoldings[month]||{};state.csvHoldings[month][acc]={...data,items:undefined,fileName,importedAt:new Date().toISOString()};saveState();applyHoldingsToForm(month);$('csvStatus').textContent='評価額CSVを入力欄へ反映しました。最後に「この月を保存」を押してください。';$('csvPreview').innerHTML='';updateUndoButton();scheduleDraft();};
 }
