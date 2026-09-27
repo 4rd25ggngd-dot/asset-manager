@@ -878,11 +878,12 @@ function previewHoldings(data,fileName){
 }
 function tradeRowsFromCsv(rows){
  const hi=rows.findIndex(r=>r.some(x=>/約定日|受渡日|取引日/.test(String(x)))&&r.some(x=>/取引区分|売買区分|対象証券名|銘柄名|ティッカー/.test(String(x))));if(hi<0)throw new Error('売買CSVの見出しを確認できません');
- const h=rows[hi].map(x=>String(x).replace(/\s/g,''));const ix=(re)=>h.findIndex(x=>re.test(x));
- const dateI=ix(/約定日|取引日/), recvI=ix(/受渡金額（?受取）?|受渡金額\[円\].*受取/), payI=ix(/受渡金額（?支払）?|受渡金額\[円\].*支払/);
+ const normCsvText=x=>String(x??'').normalize('NFKC').replace(/\s/g,'');
+ const h=rows[hi].map(normCsvText);const ix=(re)=>h.findIndex(x=>re.test(x));
+ const dateI=ix(/約定日|取引日/), recvI=ix(/受渡金額\(?受取\)?|受渡金額\[円\].*受取/), payI=ix(/受渡金額\(?支払\)?|受渡金額\[円\].*支払/);
  const yenI=ix(/受渡金額\[円\]|円換算/), usdI=ix(/受渡金額\[USドル\]|約定代金\[USドル\]/), fxI=ix(/為替レート/), nameI=ix(/対象証券名|銘柄名|銘柄$/), tickerI=ix(/ティッカー/), typeI=ix(/取引区分/), sideI=ix(/売買区分/);
  const out=[];
- for(const r of rows.slice(hi+1)){const tx=String(r[typeI]||''),side=String(r[sideI]||''),txt=r.join(' ');let type=null;if(/売却/.test(side)||/売却/.test(tx))type='sell';else if(/買付|購入/.test(side)||/購入|買付/.test(tx))type='buy';else continue;
+ for(const r of rows.slice(hi+1)){const tx=normCsvText(r[typeI]),side=normCsvText(r[sideI]),txt=r.map(normCsvText).join(' ');let type=null;if(/売却/.test(side)||/売却/.test(tx))type='sell';else if(/買付|購入/.test(side)||/購入|買付/.test(tx))type='buy';else continue;
   const ds=String(r[dateI]||'').match(/(20\d{2})[\/\-.年](\d{1,2})/);if(!ds)continue;let amt=0,conversion='円';
   if(type==='buy'&&payI>=0)amt=Math.abs(money(r[payI]));if(type==='sell'&&recvI>=0)amt=Math.abs(money(r[recvI]));if(!amt&&yenI>=0)amt=Math.abs(money(r[yenI]));
   if(!amt&&usdI>=0&&fxI>=0){const usd=Math.abs(money(r[usdI])),fx=money(r[fxI]);if(usd&&fx){amt=Math.round(usd*fx);conversion=`USD ${usd} × ${fx}`}}
