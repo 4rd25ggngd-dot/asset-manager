@@ -71,7 +71,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 .status{padding:4px 7px;border-radius:999px;background:#eef0ff;color:#3442b8;font-size:10px;font-weight:750}
 .bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;height:72px;background:#fff;border-top:1px solid #e5e7eb;display:grid;grid-template-columns:repeat(4,1fr);z-index:30}
 .bottom a{text-decoration:none;text-align:center;color:#8a909d;font-size:10px;padding-top:10px} .bottom a span{display:block;font-size:21px;margin-bottom:2px}
-.bank-detail{display:none;margin:10px 14px 0;background:#fff;border:1px solid #e8ecef;border-radius:16px;padding:12px 14px}.bank-detail.open{display:block}.bank-detail-head{display:flex;justify-content:space-between;align-items:center}.bank-detail-head button{border:0;background:#f2f5f4;border-radius:9px;padding:6px 9px}.bank-detail-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:8px 0;border-bottom:1px solid #eef1f2;font-size:12px}.bank-detail-row:last-child{border-bottom:0}.bank-detail-row small{display:block;color:#8a919a;margin-top:2px}.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#182033;color:#fff;padding:9px 12px;border-radius:11px;font-size:11px;z-index:99;display:none;max-width:340px;text-align:center}
+.bank-detail{display:none;margin:10px 14px 0;background:#fff;border:1px solid #e8ecef;border-radius:16px;padding:12px 14px}.bank-detail.open{display:block}.bank-detail-head{display:flex;justify-content:space-between;align-items:center}.bank-detail-head button{border:0;background:#f2f5f4;border-radius:9px;padding:6px 9px}.bank-detail-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:8px 0;border-bottom:1px solid #eef1f2;font-size:12px}.bank-detail-row:last-child{border-bottom:0}.bank-detail-row small{display:block;color:#8a919a;margin-top:2px}.donut-wrap{display:flex;justify-content:center;padding:10px 0}.donut{width:150px;height:150px;border-radius:50%;position:relative}.donut:after{content:"";position:absolute;inset:32px;background:#fff;border-radius:50%}.invest-detail{display:none;margin:10px 14px 0;background:#fff;border:1px solid #e8ecef;border-radius:16px;padding:12px 14px}.invest-detail.open{display:block}.detail-cat{border-bottom:1px solid #eef1f2}.detail-cat-head{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 0;cursor:pointer;font-size:12px}.detail-cat-head small{display:block;color:#8a919a;margin-top:2px}.detail-holdings{display:none;padding:0 0 8px 10px}.detail-holdings.open{display:block}.holding-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 0;border-top:1px solid #f1f2f5;font-size:11px}.pending-trade{padding:9px 0;border-bottom:1px solid #eef1f2}.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#182033;color:#fff;padding:9px 12px;border-radius:11px;font-size:11px;z-index:99;display:none;max-width:340px;text-align:center}
 @media(max-width:480px){.tx-grid{grid-template-columns:1fr}.period-inline{min-width:128px;max-width:52%}.card-period{min-width:128px;max-width:55%}}
 @media(max-width:390px){.calc3{grid-template-columns:1fr}.entry-row.fund,.columns-head.fund{grid-template-columns:1fr .8fr .8fr .8fr 30px}.pie-wrap{grid-template-columns:145px 1fr;gap:10px}.pie{width:145px;height:145px}.pie:after{inset:36px}.period-picker{min-height:60px;font-size:17px}}
 </style>
@@ -96,9 +96,9 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 </div>
 <div class="grid">
 <div class="mini bank-card" id="homeBankCard" role="button" tabindex="0"><div class="lab">銀行・預金等</div><b id="homeBank">¥5,968,022</b></div>
-<div class="mini invest-card"><div class="lab">投資資産</div><b id="homeInvest">¥57,161,384</b></div>
+<div class="mini invest-card" id="homeInvestCard" role="button" tabindex="0"><div class="lab">投資資産</div><b id="homeInvest">¥57,161,384</b></div>
 </div>
-<div class="bank-detail" id="homeBankDetail"><div class="bank-detail-head"><b>口座別残高</b><button type="button" id="closeBankDetail">閉じる</button></div><div id="homeBankRows"></div></div>
+<div class="bank-detail" id="homeBankDetail"><div class="bank-detail-head"><b>銀行・預金等の内訳</b><button type="button" id="closeBankDetail">閉じる</button></div><div id="homeBankDonut"></div><div id="homeBankRows"></div></div><div class="invest-detail" id="homeInvestDetail"><div class="bank-detail-head"><b>投資資産の内訳</b><button type="button" id="closeInvestDetail">閉じる</button></div><div id="homeInvestDonut"></div><div id="homeInvestRows"></div></div>
 
 <div class="card">
 <h2>資産の推移</h2>
@@ -161,7 +161,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <div class="account-row" style="margin-top:10px"><label>取込先口座<select id="csvAccount"></select></label><button class="secondary-btn" type="button" id="addAccountBtn">＋口座</button></div>
 <div class="action-row" style="margin-top:10px"><label class="file-btn">評価額CSV<input class="hidden-file" type="file" id="holdingsCsv" accept=".csv,text/csv"></label><label class="file-btn">売買履歴CSV<input class="hidden-file" type="file" id="tradesCsv" accept=".csv,text/csv"></label></div>
 <div class="import-status" id="csvStatus">CSVを選ぶと内容を解析し、確認後に反映します。</div>
-<div id="csvPreview"></div><div id="csvPendingList"></div><button class="primary-btn" type="button" id="applyAllCsvBtn" style="display:none;width:100%;margin-top:9px">取込済み評価額CSVをまとめて反映</button><button class="secondary-btn" type="button" id="undoCsvBtn" style="display:none;width:100%;margin-top:9px">直前のCSV取込を取り消す</button>
+<div id="csvPreview"></div><div id="csvPendingList"></div><div id="tradePendingList"></div><button class="primary-btn" type="button" id="applyAllTradesBtn" style="display:none;width:100%;margin-top:9px">取込済み売買CSVをまとめて反映</button><button class="primary-btn" type="button" id="applyAllCsvBtn" style="display:none;width:100%;margin-top:9px">取込済み評価額CSVをまとめて反映</button><button class="secondary-btn" type="button" id="undoCsvBtn" style="display:none;width:100%;margin-top:9px">直前のCSV取込を取り消す</button>
 </div>
 
 <h3>銀行・預金等</h3>
@@ -289,11 +289,11 @@ function simpleCalc(v){
   try { const r=Function('"use strict";return ('+s+')')(); return Number.isFinite(r)?r:NaN; } catch(e) { return NaN; }
 }
 
-function defaultState(){ return {months:{}, history:[], breakdowns:{}, transactions:[], accounts:[], csvHoldings:{}, csvPending:{}, lastCsvUndo:null, drafts:{}, bankAccountNames:[], fundAccountNames:[]}; }
+function defaultState(){ return {months:{}, history:[], breakdowns:{}, transactions:[], accounts:[], csvHoldings:{}, csvPending:{}, lastCsvUndo:null, drafts:{}, bankAccountNames:[], fundAccountNames:[], tradePending:{}}; }
 function loadState(){
   try {
    const s=JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultState();
-   s.months=s.months||{}; s.history=s.history||[]; s.breakdowns=s.breakdowns||{}; s.transactions=s.transactions||[]; s.accounts=s.accounts||[]; s.csvHoldings=s.csvHoldings||{}; s.csvPending=s.csvPending||{}; s.lastCsvUndo=s.lastCsvUndo||null; s.drafts=s.drafts||{}; s.bankAccountNames=s.bankAccountNames||[]; s.fundAccountNames=s.fundAccountNames||[];
+   s.months=s.months||{}; s.history=s.history||[]; s.breakdowns=s.breakdowns||{}; s.transactions=s.transactions||[]; s.accounts=s.accounts||[]; s.csvHoldings=s.csvHoldings||{}; s.csvPending=s.csvPending||{}; s.lastCsvUndo=s.lastCsvUndo||null; s.drafts=s.drafts||{}; s.bankAccountNames=s.bankAccountNames||[]; s.fundAccountNames=s.fundAccountNames||[]; s.tradePending=s.tradePending||{};
    return s;
   }
   catch(e) { return defaultState(); }
@@ -549,6 +549,8 @@ function breakdownForMonth(key){
  return {jp:0,us:0,fund:0,bond:0,comm:0,crypto:0,cash:rec.bank,detailed:false,source:'総額履歴のみ'};
 }
 
+function donutMarkup(items){const total=items.reduce((a,x)=>a+num(x.value),0);if(!total)return '';let pos=0;const cs=['#4f5ed2','#7481df','#9aa4e8','#c0c6f1','#626c9d','#aeb4c9','#7d88b8'];const stops=items.filter(x=>num(x.value)>0).map((x,i)=>{const a=pos,b=pos+num(x.value)/total*100;pos=b;return `${cs[i%cs.length]} ${a}% ${b}%`}).join(',');return `<div class="donut-wrap"><div class="donut" style="background:conic-gradient(${stops})"></div></div>`}
+function renderInvestDetail(month){const m=state.months?.[month],box=$('homeInvestRows'),don=$('homeInvestDonut');if(!box||!don)return;if(!m){box.innerHTML='<div class="sub">この月はカテゴリ内訳がありません。</div>';don.innerHTML='';return}const t=totalsFrom(m),cats=[['国内株','jp',t.jpStock],['米国株','us',t.usStock],['投資信託','fund',t.fundVal],['債券','bond',t.bond],['コモディティ','comm',t.commodity],['暗号資産','crypto',num(m.cryptoVal)]],total=cats.reduce((a,x)=>a+num(x[2]),0)||1;don.innerHTML=donutMarkup(cats.map(x=>({value:x[2]})));const hs=[];Object.entries(state.csvHoldings?.[month]||{}).forEach(([aid,d])=>{const ac=state.accounts.find(a=>a.id===aid);(d.items||[]).forEach(x=>hs.push({...x,account:ac?.name||''}))});box.innerHTML=cats.map(([name,key,val])=>{const list=hs.filter(x=>x.cat===key);return `<div class="detail-cat"><div class="detail-cat-head" data-key="${key}"><span>${name}<small>${(num(val)/total*100).toFixed(1)}%</small></span><b>${yen(val)} ›</b></div><div class="detail-holdings" id="hold-${key}">${list.length?list.sort((a,b)=>num(b.value)-num(a.value)).map(x=>`<div class="holding-row"><span>${esc(x.label||'銘柄')}<small style="display:block;color:#8a919a">${esc(x.account)}</small></span><b>${yen(x.value)}</b></div>`).join(''):'<div class="sub" style="padding:7px 0">この月は個別銘柄明細がありません。</div>'}</div></div>`}).join('');box.querySelectorAll('.detail-cat-head').forEach(h=>h.onclick=()=>box.querySelector('#hold-'+h.dataset.key).classList.toggle('open'))}
 function renderHome(){
  const periods=availablePeriods();
  if(!periods.length){ $('headerDate').textContent='データ未取込'; return; }
@@ -575,10 +577,10 @@ function renderHome(){
  $('reasonInvest').textContent=signedYen(invGain);
  $('reasonSaving').textContent=signedYen(totalChange-invGain);
  $('reasonPeriod').textContent=prevDec?`${cur.year}年1月〜${cur.m}月`:`${start.label}〜${cur.label}`;
- renderBankDetail(cur.month,cur.bank);
+ renderBankDetail(cur.month,cur.bank);renderInvestDetail(cur.month);
 }
 function renderBankDetail(month,total){
- const rows=state.months?.[month]?.banks||[],box=$('homeBankRows');if(!box)return;
+ const rows=state.months?.[month]?.banks||[],box=$('homeBankRows'),don=$('homeBankDonut');if(!box)return;if(don)don.innerHTML=donutMarkup(rows.map(x=>({value:x.value})));
  if(!rows.length){box.innerHTML='<div class="sub" style="padding:8px 0">この月は口座別内訳が未登録です。合計 '+yen(total)+' のみ確認できます。</div>';return;}
  const sum=rows.reduce((a,x)=>a+num(x.value),0)||1;box.innerHTML=rows.slice().sort((a,b)=>num(b.value)-num(a.value)).map(x=>'<div class="bank-detail-row"><span>'+esc(x.name||'口座')+'<small>'+(num(x.value)/sum*100).toFixed(1)+'%</small></span><b>'+yen(x.value)+'</b></div>').join('');
 }
@@ -850,6 +852,17 @@ function applyHoldingsToForm(month){
  updateInputTotals();scheduleDraft();
 }
 let pendingCsv=null;
+function renderTradePending(){
+ const month=$('recordMonth')?.value,arr=state.tradePending?.[month]||[],box=$('tradePendingList'),btn=$('applyAllTradesBtn');if(!box||!btn)return;
+ if(!arr.length){box.innerHTML='';btn.style.display='none';return}
+ box.innerHTML='<div class="preview-list" style="margin-top:10px"><b>取込待ちの売買CSV</b>'+arr.map(x=>{const ac=state.accounts.find(a=>a.id===x.accountId);return `<div class="pending-trade"><b>${esc(ac?.name||'口座')}</b><small style="display:block;color:#7b8290">${esc(x.fileName)} ・ ${x.items.length}件</small></div>`}).join('')+'</div>';
+ btn.style.display='block';btn.textContent=`取込済み売買CSVをまとめて反映（${arr.length}ファイル）`;
+}
+function applyAllPendingTrades(){
+ const month=$('recordMonth').value,arr=state.tradePending?.[month]||[];if(!arr.length)return toast('取込待ちの売買CSVがありません');let added=0,ids=[];
+ arr.forEach(pack=>pack.items.forEach(x=>{const key=[pack.accountId,x.month,x.category,x.type,Math.round(x.amount),x.memo].join('|');if(state.transactions.some(t=>t.importKey===key))return;const id='csv_'+Date.now()+'_'+added;state.transactions.push({...x,id,accountId:pack.accountId,source:'CSV取込',importKey:key});ids.push(id);added++}));
+ state.lastCsvUndo={kind:'trades',ids};delete state.tradePending[month];saveState();renderAll();renderTradePending();updateUndoButton();$('csvStatus').textContent=`売買履歴を${added}件まとめて追加しました。重複は自動で除外します。`;
+}
 function renderCsvPending(){
  const month=$('recordMonth')?.value, all=state.csvPending?.[month]||{}, entries=Object.entries(all);
  const box=$('csvPendingList'), btn=$('applyAllCsvBtn'); if(!box||!btn)return;
@@ -893,10 +906,10 @@ function tradeRowsFromCsv(rows){
 }
 function previewTrades(items,fileName){
  const sums={};items.forEach(x=>{const k=x.category+'_'+x.type;sums[k]=(sums[k]||0)+x.amount});
- $('csvPreview').innerHTML='<div class="preview-list">'+Object.entries(sums).map(([k,v])=>`<div class="preview-row"><span>${esc(k.replace('_buy',' 買付').replace('_sell',' 売却'))}</span><b>${yen(v)}</b></div>`).join('')+`</div><div class="action-row"><button class="secondary-btn" type="button" id="cancelCsvBtn">キャンセル</button><button class="primary-btn" type="button" id="applyCsvBtn">この売買履歴を反映</button></div>`;
+ $('csvPreview').innerHTML='<div class="preview-list">'+Object.entries(sums).map(([k,v])=>`<div class="preview-row"><span>${esc(k.replace('_buy',' 買付').replace('_sell',' 売却'))}</span><b>${yen(v)}</b></div>`).join('')+`</div><div class="action-row"><button class="secondary-btn" type="button" id="cancelCsvBtn">キャンセル</button><button class="primary-btn" type="button" id="applyCsvBtn">この売買CSVを取込リストに追加</button></div>`;
  const conv=items.filter(x=>x.conversion&&x.conversion!=='円');$('csvStatus').textContent=`${fileName}：${items.length}件を解析しました。${conv.length?` ${conv.length}件はドル金額×CSV為替レートで円換算しました。`:''}内容を確認して反映してください。`;
  $('cancelCsvBtn').onclick=()=>{$('csvPreview').innerHTML='';$('csvStatus').textContent='CSVの内容を破棄しました。既存データは変更していません。'};
- $('applyCsvBtn').onclick=()=>{const acc=$('csvAccount').value;let added=0,ids=[];items.forEach(x=>{const key=[acc,x.month,x.category,x.type,Math.round(x.amount),x.memo].join('|');if(state.transactions.some(t=>t.importKey===key))return;const id='csv_'+Date.now()+'_'+added;state.transactions.push({...x,id,accountId:acc,source:'CSV取込',importKey:key});ids.push(id);added++});state.lastCsvUndo={kind:'trades',ids};saveState();renderAll();$('csvStatus').textContent=`売買履歴を${added}件追加しました。重複は自動で除外します。`;$('csvPreview').innerHTML='';updateUndoButton();};
+ $('applyCsvBtn').onclick=()=>{const month=$('recordMonth').value,acc=$('csvAccount').value;state.tradePending[month]=state.tradePending[month]||[];state.tradePending[month].push({id:uid(),fileName,accountId:acc,items,importedAt:new Date().toISOString()});saveState();$('csvPreview').innerHTML='';$('csvStatus').textContent='売買CSVを取込リストへ追加しました。続けて別のCSVを追加できます。';renderTradePending();};
 }
 function readCsvFile(file,kind){const fr=new FileReader();fr.onload=()=>{try{const rows=parseCsv(decodeCsv(fr.result));if(kind==='holdings')previewHoldings(holdingsFromRows(rows),file.name);else{const a=tradeRowsFromCsv(rows);if(!a.length)throw new Error('売買明細を判定できませんでした');previewTrades(a,file.name)}}catch(e){$('csvStatus').textContent='CSVを解析できませんでした：'+e.message}};fr.readAsArrayBuffer(file)}
 
@@ -929,12 +942,13 @@ function changeYear(prefix){
 }
 function pickPeriod(v){if(!v)return;const ps=availablePeriods();const exact=ps.find(x=>x.key===v);if(exact)syncPeriod(v);else toast('この年月のデータはまだありません')}
 $('homePeriod').onchange=e=>pickPeriod(e.target.value);
-$('homeBankCard').onclick=()=>$('homeBankDetail').classList.toggle('open');$('closeBankDetail').onclick=e=>{e.stopPropagation();$('homeBankDetail').classList.remove('open')};$('recordMonth').addEventListener('change',()=>{renderInputTxSummary();renderCsvPending()});
+$('homeBankCard').onclick=()=>$('homeBankDetail').classList.toggle('open');$('closeBankDetail').onclick=e=>{e.stopPropagation();$('homeBankDetail').classList.remove('open')};$('homeInvestCard').onclick=()=>$('homeInvestDetail').classList.toggle('open');$('closeInvestDetail').onclick=e=>{e.stopPropagation();$('homeInvestDetail').classList.remove('open')};$('recordMonth').addEventListener('change',()=>{renderInputTxSummary();renderCsvPending();renderTradePending()});
 $('investPeriod').onchange=e=>pickPeriod(e.target.value);
 
+$('applyAllTradesBtn').onclick=applyAllPendingTrades;
 $('applyAllCsvBtn').onclick=applyAllPendingHoldings;
 $('undoCsvBtn').onclick=undoLastCsv;updateUndoButton();
-ensureAccounts();renderAccountOptions();renderCsvPending();
+ensureAccounts();renderAccountOptions();renderCsvPending();renderTradePending();
 const __initialKey=latestDisplayKey();
 if(availablePeriods().length) syncPeriod(__initialKey);
 
