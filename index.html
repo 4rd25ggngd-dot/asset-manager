@@ -852,6 +852,7 @@ function applyHoldingsToForm(month){
  updateInputTotals();scheduleDraft();
 }
 let pendingCsv=null;
+function uid(){return 'id_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10)}
 function renderTradePending(){
  const month=$('recordMonth')?.value,arr=state.tradePending?.[month]||[],box=$('tradePendingList'),btn=$('applyAllTradesBtn');if(!box||!btn)return;
  if(!arr.length){box.innerHTML='';btn.style.display='none';return}
@@ -916,6 +917,7 @@ function previewTrades(items,fileName){
   if(!Array.isArray(state.tradePending[month]))state.tradePending[month]=[];
   state.tradePending[month].push({id:uid(),fileName,accountId:acc,items,importedAt:new Date().toISOString()});
   const saved=saveState();
+  if(!saved){state.tradePending[month].pop();throw new Error('端末への保存に失敗しました。バックアップを確認してください')}
   $('csvPreview').innerHTML='<div class="note">売買CSVを取込リストへ追加しました。下のボタンからまとめて反映してください。</div><button class="primary-btn" type="button" id="tradeApplyInline" style="width:100%;margin-top:10px">売買CSVをまとめて反映</button>';
   $('tradeApplyInline').onclick=()=>{try{applyAllPendingTrades()}catch(e){$('csvStatus').textContent='反映処理エラー：'+e.message;console.error(e)}};
   $('csvStatus').textContent=saved?'売買CSVを取込リストに追加しました。':'売買CSVを一時保持しましたが端末への保存に失敗しました。';
