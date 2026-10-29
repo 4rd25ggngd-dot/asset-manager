@@ -299,7 +299,7 @@ function loadState(){
   catch(e) { return defaultState(); }
 }
 let state=loadState();
-function saveState(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true}catch(e){console.error('保存失敗',e);const el=$('csvStatus');if(el)el.textContent='端末への保存に失敗しました（保存容量不足など）。データタブからバックアップを保存してください。';return false}}
 function toast(msg){ const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2200); }
 
 function addBankRow(name='',value=0){
@@ -909,7 +909,18 @@ function previewTrades(items,fileName){
  $('csvPreview').innerHTML='<div class="preview-list">'+Object.entries(sums).map(([k,v])=>`<div class="preview-row"><span>${esc(k.replace('_buy',' 買付').replace('_sell',' 売却'))}</span><b>${yen(v)}</b></div>`).join('')+`</div><div class="action-row"><button class="secondary-btn" type="button" id="cancelCsvBtn">キャンセル</button><button class="primary-btn" type="button" id="applyCsvBtn">この売買CSVを取込リストに追加</button></div>`;
  const conv=items.filter(x=>x.conversion&&x.conversion!=='円');$('csvStatus').textContent=`${fileName}：${items.length}件を解析しました。${conv.length?` ${conv.length}件はドル金額×CSV為替レートで円換算しました。`:''}内容を確認して反映してください。`;
  $('cancelCsvBtn').onclick=()=>{$('csvPreview').innerHTML='';$('csvStatus').textContent='CSVの内容を破棄しました。既存データは変更していません。'};
- $('applyCsvBtn').onclick=()=>{const month=$('recordMonth').value,acc=$('csvAccount').value;state.tradePending[month]=state.tradePending[month]||[];state.tradePending[month].push({id:uid(),fileName,accountId:acc,items,importedAt:new Date().toISOString()});saveState();$('csvPreview').innerHTML='<div class="note">売買CSVを取込リストへ追加しました。下の「取込済み売買CSVをまとめて反映」で取引履歴に登録します。</div><button class="primary-btn" type="button" id="tradeApplyInline" style="width:100%;margin-top:10px">売買CSVをまとめて反映</button>';$('tradeApplyInline').onclick=applyAllPendingTrades;$('csvStatus').textContent='売買CSVを取込リストへ追加しました。続けて別のCSVを追加できます。';renderTradePending();};
+ $('applyCsvBtn').onclick=()=>{try{
+  const month=$('recordMonth').value,acc=$('csvAccount').value;
+  if(!month){$('csvStatus').textContent='入力対象月が選択されていません';return}
+  if(!state.tradePending||typeof state.tradePending!=='object')state.tradePending={};
+  if(!Array.isArray(state.tradePending[month]))state.tradePending[month]=[];
+  state.tradePending[month].push({id:uid(),fileName,accountId:acc,items,importedAt:new Date().toISOString()});
+  const saved=saveState();
+  $('csvPreview').innerHTML='<div class="note">売買CSVを取込リストへ追加しました。下のボタンからまとめて反映してください。</div><button class="primary-btn" type="button" id="tradeApplyInline" style="width:100%;margin-top:10px">売買CSVをまとめて反映</button>';
+  $('tradeApplyInline').onclick=()=>{try{applyAllPendingTrades()}catch(e){$('csvStatus').textContent='反映処理エラー：'+e.message;console.error(e)}};
+  $('csvStatus').textContent=saved?'売買CSVを取込リストに追加しました。':'売買CSVを一時保持しましたが端末への保存に失敗しました。';
+  renderTradePending();
+ }catch(e){$('csvStatus').textContent='追加処理エラー：'+e.message;console.error(e)}};
 }
 function readCsvFile(file,kind){const fr=new FileReader();fr.onload=()=>{try{const rows=parseCsv(decodeCsv(fr.result));if(kind==='holdings')previewHoldings(holdingsFromRows(rows),file.name);else{const a=tradeRowsFromCsv(rows);if(!a.length)throw new Error('売買明細を判定できませんでした');previewTrades(a,file.name)}}catch(e){$('csvStatus').textContent='CSVを解析できませんでした：'+e.message}};fr.readAsArrayBuffer(file)}
 
