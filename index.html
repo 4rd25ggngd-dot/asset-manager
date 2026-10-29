@@ -853,10 +853,27 @@ function applyHoldingsToForm(month){
 }
 let pendingCsv=null;
 function uid(){return 'id_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10)}
+function removePendingTrade(id){
+ const month=$('recordMonth').value;
+ const arr=state.tradePending?.[month]||[];
+ const item=arr.find(x=>String(x.id)===String(id));
+ if(!item)return;
+ if(!confirm(`取込待ちの「${item.fileName}」を削除しますか？\n確定済みデータや取引履歴は変更しません。`))return;
+ const before=arr.slice();
+ state.tradePending[month]=arr.filter(x=>String(x.id)!==String(id));
+ if(!state.tradePending[month].length)delete state.tradePending[month];
+ if(!saveState()){
+   state.tradePending[month]=before;
+   $('csvStatus').textContent='削除内容を保存できませんでした。バックアップを確認してください。';return;
+ }
+ renderTradePending();
+ $('csvStatus').textContent=`取込待ちの「${item.fileName}」を削除しました。取引履歴は変更していません。`;
+}
 function renderTradePending(){
  const month=$('recordMonth')?.value,arr=state.tradePending?.[month]||[],box=$('tradePendingList'),btn=$('applyAllTradesBtn');if(!box||!btn)return;
  if(!arr.length){box.innerHTML='';btn.style.display='none';return}
- box.innerHTML='<div class="preview-list" style="margin-top:10px"><b>取込待ちの売買CSV</b>'+arr.map(x=>{const ac=state.accounts.find(a=>a.id===x.accountId);return `<div class="pending-trade"><b>${esc(ac?.name||'口座')}</b><small style="display:block;color:#7b8290">${esc(x.fileName)} ・ ${(x.items||[]).length}件</small></div>`}).join('')+'</div>';
+ box.innerHTML='<div class="preview-list" style="margin-top:10px"><b>取込待ちの売買CSV</b>'+arr.map(x=>{const ac=state.accounts.find(a=>a.id===x.accountId);const mismatched=(x.items||[]).filter(t=>t.month!==month).length;return `<div class="pending-trade" style="padding:10px 0;border-bottom:1px solid #ddd"><b>${esc(ac?.name||'口座')}</b><small style="display:block;color:#7b8290">${esc(x.fileName)} ・ ${(x.items||[]).length}件</small>${mismatched?`<small style="display:block;color:#b45309">対象月と異なる取引 ${mismatched}件</small>`:''}<button type="button" class="secondary-btn remove-pending-trade" data-id="${esc(String(x.id))}" style="margin-top:7px">このCSVを削除</button></div>`}).join('')+'</div>';
+ box.querySelectorAll('.remove-pending-trade').forEach(b=>b.addEventListener('click',()=>removePendingTrade(b.dataset.id)));
  btn.style.setProperty('display','block','important');btn.textContent=`取込済み売買CSVをまとめて反映（${arr.length}ファイル）`;
 }
 function applyAllPendingTrades(){
@@ -913,6 +930,8 @@ function previewTrades(items,fileName){
  $('applyCsvBtn').onclick=()=>{try{
   const month=$('recordMonth').value,acc=$('csvAccount').value;
   if(!month){$('csvStatus').textContent='入力対象月が選択されていません';return}
+  const wrongMonths=[...new Set(items.filter(x=>x.month!==month).map(x=>x.month||'不明'))];
+  if(wrongMonths.length){$('csvStatus').textContent=`このCSVには選択月（${month}）以外の取引（${wrongMonths.join('、')}）が含まれています。取込リストには追加していません。正しい月を選ぶか、別のCSVを選んでください。`;return}
   if(!state.tradePending||typeof state.tradePending!=='object')state.tradePending={};
   if(!Array.isArray(state.tradePending[month]))state.tradePending[month]=[];
   state.tradePending[month].push({id:uid(),fileName,accountId:acc,items,importedAt:new Date().toISOString()});
