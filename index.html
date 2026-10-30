@@ -160,6 +160,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 <div class="sub">証券口座ごとに「評価額CSV」と「売買履歴CSV」を読み込めます。反映前に分類・合計を確認できます。</div>
 <div class="account-row" style="margin-top:10px"><label>取込先口座<select id="csvAccount"></select></label><button class="secondary-btn" type="button" id="addAccountBtn">＋口座</button></div>
 <div class="action-row" style="margin-top:10px"><label class="file-btn">評価額CSV<input class="hidden-file" type="file" id="holdingsCsv" accept=".csv,text/csv"></label><label class="file-btn">売買履歴CSV<input class="hidden-file" type="file" id="tradesCsv" accept=".csv,text/csv"></label></div>
+<div class="note" style="margin-top:10px;line-height:1.8"><b>楽天証券 CSVの取得方法（毎月の確認用）</b><div>📊 <b>評価額CSV：</b>保有商品一覧 → CSV</div><div>🧾 <b>売買履歴CSV：</b>口座明細（精算履歴）→ <b>円建て・外貨建て</b>それぞれCSV</div><div style="font-size:0.9em">※ 円建てと外貨建ての両方に取引がある場合は、2つのCSVを取り込んでください。</div></div>
 <div class="import-status" id="csvStatus">CSVを選ぶと内容を解析し、確認後に反映します。</div>
 <div id="csvPreview"></div><div id="csvPendingList"></div><div id="tradePendingList"></div><button class="primary-btn" type="button" id="applyAllTradesBtn" style="display:none;width:100%;margin-top:9px">取込済み売買CSVをまとめて反映</button><button class="primary-btn" type="button" id="applyAllCsvBtn" style="display:none;width:100%;margin-top:9px">取込済み評価額CSVをまとめて反映</button><button class="secondary-btn" type="button" id="undoCsvBtn" style="display:none;width:100%;margin-top:9px">直前のCSV取込を取り消す</button>
 </div>
@@ -890,8 +891,8 @@ function renderCsvPending(){
 }
 function stageHolding(data,fileName){
  const month=$('recordMonth').value,acc=$('csvAccount').value;if(!month)return toast('対象月を選択してください');
- state.csvPending[month]=state.csvPending[month]||{};state.csvPending[month][acc]={...data,items:undefined,fileName,importedAt:new Date().toISOString()};saveState();
- $('csvPreview').innerHTML='';$('csvStatus').textContent='この口座のCSVを取込リストへ追加しました。別口座へ切り替えて続けてCSVを追加できます。';renderCsvPending();toast('取込リストへ追加しました');
+ state.csvPending[month]=state.csvPending[month]||{};state.csvPending[month][acc]={...data,items:(data.items||[]).map(x=>({...x})),fileName,importedAt:new Date().toISOString()};saveState();
+ $('csvPreview').innerHTML='';$('csvStatus').textContent=`この口座のCSV（個別銘柄 ${(data.items||[]).length}件を含む）を取込リストへ追加しました。別口座へ切り替えて続けてCSVを追加できます。`;renderCsvPending();toast('取込リストへ追加しました');
 }
 function applyAllPendingHoldings(){
  const month=$('recordMonth').value, pending=state.csvPending?.[month]||{}, ids=Object.keys(pending);if(!ids.length)return toast('取込待ちCSVがありません');
