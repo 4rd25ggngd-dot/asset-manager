@@ -74,6 +74,20 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 .bank-detail{display:none;margin:10px 14px 0;background:#fff;border:1px solid #e8ecef;border-radius:16px;padding:12px 14px}.bank-detail.open{display:block}.bank-detail-head{display:flex;justify-content:space-between;align-items:center}.bank-detail-head button{border:0;background:#f2f5f4;border-radius:9px;padding:6px 9px}.bank-detail-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:8px 0;border-bottom:1px solid #eef1f2;font-size:12px}.bank-detail-row:last-child{border-bottom:0}.bank-detail-row small{display:block;color:#8a919a;margin-top:2px}.donut-wrap{display:flex;justify-content:center;padding:10px 0}.donut{width:150px;height:150px;border-radius:50%;position:relative}.donut:after{content:"";position:absolute;inset:32px;background:#fff;border-radius:50%}.invest-detail{display:none;margin:10px 14px 0;background:#fff;border:1px solid #e8ecef;border-radius:16px;padding:12px 14px}.invest-detail.open{display:block}.detail-cat{border-bottom:1px solid #eef1f2}.detail-cat-head{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 0;cursor:pointer;font-size:12px}.detail-cat-head small{display:block;color:#8a919a;margin-top:2px}.detail-holdings{display:none;padding:0 0 8px 10px}.detail-holdings.open{display:block}.holding-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 0;border-top:1px solid #f1f2f5;font-size:11px}.pending-trade{padding:9px 0;border-bottom:1px solid #eef1f2}.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#182033;color:#fff;padding:9px 12px;border-radius:11px;font-size:11px;z-index:99;display:none;max-width:340px;text-align:center}
 @media(max-width:480px){.tx-grid{grid-template-columns:1fr}.period-inline{min-width:128px;max-width:52%}.card-period{min-width:128px;max-width:55%}}
 @media(max-width:390px){.calc3{grid-template-columns:1fr}.entry-row.fund,.columns-head.fund{grid-template-columns:1fr .8fr .8fr .8fr 30px}.pie-wrap{grid-template-columns:145px 1fr;gap:10px}.pie{width:145px;height:145px}.pie:after{inset:36px}.period-picker{min-height:60px;font-size:17px}}
+
+/* V3.7: 評価額を優先し、売買手入力は必要時だけ展開 */
+.manual-trade-details{margin:7px 0 13px;border:1px solid #e4e8ee;border-radius:9px;padding:8px 10px}
+.manual-trade-details summary{cursor:pointer;font-size:12px;font-weight:650;color:#536477;list-style:none}
+.manual-trade-details summary::-webkit-details-marker{display:none}
+.manual-trade-details summary::before{content:'＋ ';font-weight:800}
+.manual-trade-details[open] summary::before{content:'－ '}
+.manual-trade-details .calc3{margin-top:9px;grid-template-columns:1fr 1fr}
+.fund-trade-toggle{margin:8px 0;font-size:12px}
+#fundEntries:not(.show-manual-trades) .fund-buy,#fundEntries:not(.show-manual-trades) .fund-sell{display:none}
+#fundEntries:not(.show-manual-trades) .entry-row.fund{grid-template-columns:1fr 1fr 34px}
+.columns-head.fund:not(.show-manual-trades){grid-template-columns:1fr 1fr 34px}
+.columns-head.fund:not(.show-manual-trades) span:nth-child(3),.columns-head.fund:not(.show-manual-trades) span:nth-child(4){display:none}
+@media(max-width:390px){#fundEntries:not(.show-manual-trades) .entry-row.fund,.columns-head.fund:not(.show-manual-trades){grid-template-columns:1fr 1fr 30px}}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -201,8 +215,8 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 </div>
 
 <h3>投資信託</h3>
-<div class="columns-head fund"><span>口座名</span><span>評価額</span><span>買付</span><span>売却</span><span></span></div>
-<div id="fundEntries" class="list-box"></div>
+<div class="columns-head fund" id="fundColumnsHead"><span>口座名</span><span>評価額</span><span>買付</span><span>売却</span><span></span></div>
+<div id="fundEntries" class="list-box"></div><button class="secondary-btn fund-trade-toggle" type="button" id="fundTradeToggle" aria-expanded="false">＋ 買付・売却を手入力する（必要な場合のみ）</button>
 <div class="action-row"><button class="add-btn" type="button" id="addFundBtn">＋ 口座を追加</button><button class="secondary-btn" type="button" id="carryFundBtn">前月の投信口座を引継</button></div><datalist id="fundAccountOptions"></datalist>
 <div class="total-preview"><span>投資信託 評価額</span><b id="fundValTotal">¥0</b><span>今月買付</span><b id="fundBuyTotal">¥0</b><span>今月売却</span><b id="fundSellTotal">¥0</b></div>
 
@@ -987,6 +1001,31 @@ if(availablePeriods().length) syncPeriod(__initialKey);
 
 updateInputTotals();
 renderAll();
+
+// V3.7: 入力欄の表示だけを切り替える。非表示でも値は保持し、既存の保存・集計処理は変更しない。
+function setupManualTradeCollapsing(){
+ for(const prefix of ['jp','us','bond','directComm','crypto']){
+  const buy=document.getElementById(prefix+'Buy'),sell=document.getElementById(prefix+'Sell');
+  if(!buy||!sell)continue;
+  const buyLabel=buy.closest('label'),sellLabel=sell.closest('label');
+  const row=buyLabel.parentElement;
+  const details=document.createElement('details');details.className='manual-trade-details';
+  const summary=document.createElement('summary');summary.textContent='買付・売却を手入力する（必要な場合のみ）';
+  const grid=document.createElement('div');grid.className='calc3';
+  row.parentNode.insertBefore(details,row.nextSibling);details.append(summary,grid);
+  grid.append(buyLabel,sellLabel);
+ }
+ const fundEntries=document.getElementById('fundEntries'),head=document.getElementById('fundColumnsHead'),btn=document.getElementById('fundTradeToggle');
+ if(btn&&fundEntries&&head){
+  btn.addEventListener('click',()=>{
+   const show=!fundEntries.classList.contains('show-manual-trades');
+   fundEntries.classList.toggle('show-manual-trades',show);head.classList.toggle('show-manual-trades',show);
+   btn.setAttribute('aria-expanded',String(show));
+   btn.textContent=show?'－ 買付・売却の手入力欄を閉じる':'＋ 買付・売却を手入力する（必要な場合のみ）';
+  });
+ }
+}
+setupManualTradeCollapsing();
 </script>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
