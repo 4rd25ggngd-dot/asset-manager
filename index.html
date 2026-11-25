@@ -88,6 +88,7 @@ th{background:#f8f9fb;color:#6f7683;font-weight:750;position:sticky;top:0} td:fi
 .columns-head.fund:not(.show-manual-trades){grid-template-columns:1fr 1fr 34px}
 .columns-head.fund:not(.show-manual-trades) span:nth-child(3),.columns-head.fund:not(.show-manual-trades) span:nth-child(4){display:none}
 @media(max-width:390px){#fundEntries:not(.show-manual-trades) .entry-row.fund,.columns-head.fund:not(.show-manual-trades){grid-template-columns:1fr 1fr 30px}}
+.account-name-wrap{display:flex;min-width:0;align-items:stretch;gap:2px}.account-name-wrap input{width:0;flex:1}.account-name-picker{width:30px;min-width:30px;padding:0;font-size:12px;cursor:pointer}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -317,19 +318,27 @@ let state=loadState();
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true}catch(e){console.error('保存失敗',e);const el=$('csvStatus');if(el)el.textContent='端末への保存に失敗しました（保存容量不足など）。データタブからバックアップを保存してください。';return false}}
 function toast(msg){ const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2200); }
 
+function attachNamePicker(r,kind){
+ const input=r.querySelector('.'+kind+'-name');if(!input||input.readOnly)return;
+ const wrap=document.createElement('div');wrap.className='account-name-wrap';input.before(wrap);wrap.appendChild(input);input.removeAttribute('list');
+ const select=document.createElement('select');select.className='account-name-picker';select.setAttribute('aria-label','過去の口座名を選択');wrap.appendChild(select);
+ const refresh=()=>{const names=accountNameChoices(kind);select.replaceChildren(new Option('▼',''));names.forEach(n=>select.add(new Option(n,n)));select.value='';};
+ refresh();select.addEventListener('focus',refresh);select.addEventListener('change',()=>{if(select.value){input.value=select.value;input.dispatchEvent(new Event('input',{bubbles:true}));}select.value='';});
+}
+function accountNameChoices(kind){const field=kind==='bank'?'banks':'funds',key=kind==='bank'?'bankAccountNames':'fundAccountNames';return [...new Set([...(state[key]||[]),...Object.values(state.months||{}).concat(Object.values(state.drafts||{})).flatMap(m=>(m[field]||[]).map(x=>x.name)),...(kind==='bank'?collectBank():collectFunds()).map(x=>x.name)].map(n=>String(n||'').trim()).filter(n=>n&&!n.includes('・預り金')&&n!=='CSV取込・株式系投信'))].sort((a,b)=>a.localeCompare(b,'ja'));}
 function addBankRow(name='',value=0){
  const r=document.createElement('div');r.className='entry-row bank';
  r.innerHTML=`<input class="bank-name" type="text" list="bankAccountOptions" placeholder="口座名" value="${esc(name)}"><input class="bank-value" type="number" placeholder="残高" value="${value||''}"><button class="remove-btn" type="button">−</button>`;
  r.querySelector('.remove-btn').onclick=()=>{r.remove();updateInputTotals();markDraftDirty()};
  r.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>{updateInputTotals();markDraftDirty()}));
- $('bankEntries').appendChild(r);
+ $('bankEntries').appendChild(r);attachNamePicker(r,'bank');
 }
 function addFundRow(name='',value=0,buy=0,sell=0){
  const r=document.createElement('div');r.className='entry-row fund';
  r.innerHTML=`<input class="fund-name" type="text" list="fundAccountOptions" placeholder="口座名" value="${esc(name)}"><input class="fund-value" type="number" placeholder="評価額" value="${value||''}"><input class="fund-buy" type="number" placeholder="買付" value="${buy||''}"><input class="fund-sell" type="number" placeholder="売却" value="${sell||''}"><button class="remove-btn" type="button">−</button>`;
  r.querySelector('.remove-btn').onclick=()=>{r.remove();updateInputTotals();markDraftDirty()};
  r.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>{updateInputTotals();markDraftDirty()}));
- $('fundEntries').appendChild(r);
+ $('fundEntries').appendChild(r);attachNamePicker(r,'fund');
 }
 function resetRows(){
  $('bankEntries').innerHTML=''; $('fundEntries').innerHTML='';
@@ -428,16 +437,15 @@ function previousMonthData(month){
  return keys.length?state.months[keys[keys.length-1]]:null;
 }
 function carryPrevious(kind){
- const month=$('recordMonth').value, prev=previousMonthData(month); if(!prev)return toast('引き継げる前月データがありません');
- if(kind==='bank'){
-   const rows=(prev.banks||[]).filter(x=>!String(x.name).includes('・預り金'));
-   if(!rows.length)return toast('前月の銀行口座がありません');
-   $('bankEntries').innerHTML='';rows.forEach(x=>addBankRow(x.name,x.value));
- }else{
-   const rows=prev.funds||[];if(!rows.length)return toast('前月の投資信託口座がありません');
-   $('fundEntries').innerHTML='';rows.forEach(x=>addFundRow(x.name,x.value,0,0));
- }
- updateInputTotals();markDraftDirty();toast('前月の口座構成と評価額を引き継ぎました');
+ const month=$('recordMonth').value,prev=previousMonthData(month);if(!prev)return toast('引き継げる前月データがありません');
+ const bank=kind==='bank', current=bank?collectBank():collectFunds();
+ const key=n=>String(n||'').normalize('NFKC').trim();
+ const seen=new Set(current.map(x=>key(x.name)).filter(Boolean));
+ const rows=(bank?prev.banks:prev.funds)||[];let added=0;
+ for(const x of rows){const n=key(x.name);if(!n||seen.has(n)||n.includes('・預り金')||n==='CSV取込・株式系投信')continue;
+ if(bank)addBankRow(x.name,x.value);else addFundRow(x.name,x.value,0,0);seen.add(n);added++;}
+ if(added){const box=$(bank?'bankEntries':'fundEntries');[...box.querySelectorAll('.entry-row')].forEach(r=>{if([...r.querySelectorAll('input')].every(i=>!i.value))r.remove()});updateInputTotals();markDraftDirty();}
+ toast(added?`${added}口座を引き継ぎました。今月の入力済み口座は維持しました。`:'引継ぎ対象の未入力口座はありません');
 }
 function monthlyTransactions(month,m){
  const t=totalsFrom(m), arr=[];
@@ -859,9 +867,9 @@ function aggregateHoldings(month){
 }
 function applyHoldingsToForm(month){
  const z=aggregateHoldings(month); $('jpVal').value=(z.jp+z.jpComm)||'';$('jpCommVal').value=z.jpComm||'';$('usVal').value=(z.us+z.usComm)||'';$('usCommVal').value=z.usComm||'';
- $('fundEntries').innerHTML='';addFundRow('CSV取込・株式系投信',z.fund,0,0);$('bondVal').value=z.bond||'';$('directCommVal').value=z.directComm||'';$('cryptoVal').value=z.crypto||'';
+ [...$('fundEntries').querySelectorAll('.entry-row')].forEach(r=>{if(r.querySelector('.fund-name').value.trim()==='CSV取込・株式系投信'||[...r.querySelectorAll('input')].every(i=>!i.value))r.remove()});addFundRow('CSV取込・株式系投信',z.fund,0,0);$('bondVal').value=z.bond||'';$('directCommVal').value=z.directComm||'';$('cryptoVal').value=z.crypto||'';
  // CSVの証券口座預り金は「銀行・預金等」へ。既存の手入力銀行口座は残し、CSV由来行だけ再構築する。
- [...document.querySelectorAll('#bankEntries .entry-row')].forEach(r=>{if(r.dataset.csvCash==='1')r.remove()});
+ [...document.querySelectorAll('#bankEntries .entry-row')].forEach(r=>{if(r.dataset.csvCash==='1'||r.querySelector('.bank-name')?.value.endsWith('・預り金'))r.remove()});
  const all=state.csvHoldings[month]||{};
  Object.entries(all).forEach(([accId,a])=>{const cash=num(a.cash);if(!cash)return;const acc=state.accounts.find(x=>x.id===accId);const r=document.createElement('div');r.className='entry-row bank';r.dataset.csvCash='1';r.innerHTML=`<input class="bank-name" type="text" value="${esc((acc?.name||'証券口座')+'・預り金')}" readonly><input class="bank-value" type="number" value="${cash}" readonly><button class="remove-btn" type="button" disabled>自動</button>`;$('bankEntries').appendChild(r)});
  updateInputTotals();scheduleDraft();
